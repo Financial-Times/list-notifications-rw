@@ -13,5 +13,5 @@ go get github.com/Financial-Times/list-notifications-rw ./...
 Due to the structure of the project, to build the binary into the root directory, run the following:
 
 ```sh
-go build ./...
+go build ./bin/list-notification-rw
 ```
