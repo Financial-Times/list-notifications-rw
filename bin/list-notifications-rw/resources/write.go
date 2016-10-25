@@ -20,15 +20,16 @@ func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http
 			logrus.WithError(err).
 				WithField("uuid", uuid).
 				WithField("tid", r.Header.Get("X-Request-Id")).
-				Error("Failed to parse json request! See error for details.")
-			w.WriteHeader(400)
+				Error("Invalid request! See error for details.")
+
+			writeError("Invalid Request body.", 400, w)
 			return
 		}
 
 		tx, err := db.Open()
 		if err != nil {
 			logrus.WithError(err).Error("Failed to connect to mongo")
-			w.WriteHeader(500)
+			writeError("An internal server error prevented processing of your request.", 500, w)
 			return
 		}
 
@@ -38,4 +39,14 @@ func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http
 
 		w.WriteHeader(200)
 	}
+}
+
+func writeError(message string, status int, w http.ResponseWriter){
+	w.WriteHeader(status)
+
+	m := msg{Message: message}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(m)
+
+	w.Header().Add("Content-Type", "application/json")
 }

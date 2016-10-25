@@ -3,17 +3,12 @@ package resources
 import (
 	"testing"
 	"net/http/httptest"
-	"github.com/stretchr/testify/mock"
-	"github.com/Financial-Times/list-notifications-rw/db"
 	"time"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"errors"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"github.com/Financial-Times/list-notifications-rw/mapping"
 )
-
-var mapper = mapping.DefaultMapper{ApiHost: "testing-123.com"}
 
 func TestReadNotifications(t *testing.T) {
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
@@ -38,9 +33,10 @@ func TestReadNotifications(t *testing.T) {
 		},
 	}
 
+	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(mapper, mockDb)(w, req)
+	ReadNotifications(testMapper, mockDb)(w, req)
 
 	if w.Code != 200 {
 		t.Fatal("Everything should be OK but we didn't return 200!")
@@ -75,7 +71,7 @@ func Test400NoSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(mapper, mockDb)(w, req)
+	ReadNotifications(testMapper, mockDb)(w, req)
 
 	if w.Code != 400 {
 		t.Fatal("No since date! Should be 400!")
@@ -91,7 +87,7 @@ func Test400JunkSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(mapper, mockDb)(w, req)
+	ReadNotifications(testMapper, mockDb)(w, req)
 
 	if w.Code != 400 {
 		t.Fatal("The since date was garbage! Should be 400!")
@@ -101,7 +97,7 @@ func Test400JunkSinceDate(t *testing.T) {
 	t.Log("Recorded 400 response as expected.")
 }
 
-func TestFailedDatabase(t *testing.T) {
+func TestFailedDatabaseOnRead(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
 
 	w := httptest.NewRecorder()
@@ -109,7 +105,7 @@ func TestFailedDatabase(t *testing.T) {
 	mockDb := new(MockDB)
 	mockDb.On("Open").Return(nil, errors.New("I broke soz"))
 
-	ReadNotifications(mapper, mockDb)(w, req)
+	ReadNotifications(testMapper, mockDb)(w, req)
 
 	if w.Code != 500 {
 		t.Fatal("Mongo was broken but we didn't return 500!")
@@ -129,10 +125,11 @@ func TestFailedToQuery(t *testing.T) {
 	mockDb := new(MockDB)
 	mockTx := new(MockTX)
 
+	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", mockSince).Return(nil, errors.New("I broke again soz"))
 	mockDb.On("Open").Return(mockTx, nil)
 
-	ReadNotifications(mapper, mockDb)(w, req)
+	ReadNotifications(testMapper, mockDb)(w, req)
 
 	if w.Code != 500 {
 		t.Fatal("Mongo failed to query but we didn't return 500!")
@@ -141,41 +138,4 @@ func TestFailedToQuery(t *testing.T) {
 	mockDb.AssertExpectations(t)
 	mockTx.AssertExpectations(t)
 	t.Log("Recorded 500 response as expected, and since date was accepted.")
-}
-
-
-type MockDB struct {
-	mock.Mock
-}
-
-type MockTX struct {
-	mock.Mock
-}
-
-func (m MockDB) Open() (db.TX, error) {
-	args := m.Called()
-	tx := args.Get(0)
-	if tx == nil {
-		return nil, args.Error(1)
-	}
-
-	return tx.(db.TX), args.Error(1)
-}
-
-func (m MockTX) ReadNotifications(since time.Time) (*[]model.InternalNotification, error) {
-	args := m.Called(since)
-	notifications := args.Get(0)
-	if notifications == nil {
-		return nil, args.Error(1)
-	}
-
-	return notifications.(*[]model.InternalNotification), args.Error(1)
-}
-
-func (m MockTX) WriteNotification(notification *model.InternalNotification){
-	m.Called(notification)
-}
-
-func (m MockTX) Close() {
-	m.Called()
 }

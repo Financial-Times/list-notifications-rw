@@ -27,12 +27,12 @@ func (m DefaultMapper) MapRequestToInternalNotification(uuid string, decoder *js
 		return nil, errors.New("Failed to parse json for list body!")
 	}
 
-	if  uuid != notification.UUID {
-		return nil, errors.New("List document contained a different UUID to the request URI!")
-	}
-
 	if !isUUID.MatchString(notification.UUID) {
 		return nil, errors.New("List document contained an invalid UUID!")
+	}
+
+	if  uuid != notification.UUID {
+		return nil, errors.New("List document contained a different UUID to the request URI!")
 	}
 
 	if notification.EventType == "" {

@@ -37,6 +37,8 @@ func ReadNotifications(mapper mapping.NotificationsMapper, db db.DB) func(w http
 			return
 		}
 
+		defer tx.Close()
+
 		notifications, err := tx.ReadNotifications(since)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to query mongo for notifications!")
