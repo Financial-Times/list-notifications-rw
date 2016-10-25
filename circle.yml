@@ -1,9 +1,6 @@
-dependencies:
-  override:
-    - go get -v ./bin/list-notifications-rw
-    - go build -v ./bin/list-notifications-rw
+general:
+  build_dir: bin/list-notifications-rw
 
 test:
-  override:
-    - go test -v -race ./...
-
+  pre:
+    pwd && cd ../../
