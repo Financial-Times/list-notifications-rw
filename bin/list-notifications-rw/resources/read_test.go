@@ -27,7 +27,7 @@ func TestReadNotifications(t *testing.T) {
 		{
 			UUID: "uuid",
 			Title: "title",
-			ChangeDate: changeDate,
+			LastModified: changeDate,
 			EventType: "UPDATE",
 			PublishReference: "tid_blah-blah-blah",
 		},
