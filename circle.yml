@@ -3,7 +3,7 @@ machine:
     GOROOT: ""
     PATH: "/usr/local/go/bin:/usr/local/go_workspace/bin:~/.go_workspace/bin:${PATH}"
     GOPATH: "${HOME}/.go_workspace:/usr/local/go_workspace:${HOME}/.go_project"
-    APP_DIR: "~/.go_project/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    APP_DIR: "$HOME/.go_project/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     GODIST: "go1.7.3.linux-amd64.tar.gz"
   post:
       - mkdir -p ~/.download
@@ -16,12 +16,12 @@ dependencies:
     - ~/.download
   override:
     - mkdir -p $HOME/.go_project/src/github.com/$CIRCLE_PROJECT_USERNAME
-    - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME ${APP_DIR}
+    - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME $APP_DIR
     - |
       echo 'export GOPATH=$GOPATH:$HOME/.go_project' >> ~/.circlerc
-    - cd ${APP_DIR} && go get -u -t -v ./...
-    - cd ${APP_DIR} && go build -v ./bin/list-notifications-rw
+    - cd $APP_DIR && go get -u -t -v ./...
+    - cd $APP_DIR && go build -v ./bin/list-notifications-rw
 
 test:
   override:
-    - cd ${APP_DIR} && go test -race -v ./...
+    - cd $APP_DIR && go test -race -v ./...
