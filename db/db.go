@@ -50,11 +50,12 @@ func (tx MongoTX) WriteNotification(notification *model.InternalNotification) {
 func (tx MongoTX) ReadNotifications(since time.Time) (*[]model.InternalNotification, error) {
 	collection := tx.session.DB("upp-store").C("notifications")
 
-	query := generateQuery(since, collection)
-	find := collection.Find(query)
+	pipe := generatePipe(since, collection)
 
 	results := []model.InternalNotification{}
-	err := find.All(&results)
+
+	err := pipe.AllowDiskUse().All(&results)
+
 	if err != nil {
 		return nil, err
 	}

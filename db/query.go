@@ -6,18 +6,64 @@ import (
 	"time"
 )
 
-func generateQuery(since time.Time, collection *mgo.Collection) *mgo.Query {
+func generatePipe(since time.Time, collection *mgo.Collection) *mgo.Pipe {
+	till := calculateTill()
+
 	match := bson.M{
-		"changeDate": bson.M {
-			"$gt": since,
+		"$match": bson.M{
+			"lastModified": bson.M {
+				"$gt": since,
+				"$lt": till,
+			},
 		},
 	}
 
-	query := collection.Find(match)
+	group := bson.M{
+		"$group": bson.M{
+			"_id": bson.M{
+				"uuid": "$uuid",
+			},
+			"lastModified": bson.M{
+				"$max": "$lastModified",
+			},
+			"uuid": bson.M{
+				"$first": "$uuid",
+			},
+			"title": bson.M{
+				"$first": "$title",
+			},
+			"eventType": bson.M{
+				"$first": "$eventType",
+			},
+			"publishReference": bson.M{
+				"$first": "$publishReference",
+			},
+		},
+	}
 
-	query.Sort("changeDate", "_id")
-	query.Limit(50)
-	query.Skip(0)
+	pipeline := []bson.M{
+		match,
+		{
+			"$sort": bson.M{
+				"lastModified": -1,
+				"uuid": 1,
+			},
+		},
+		group,
+		{
+			"$sort": bson.M{
+				"lastModified": 1,
+				"_id": 1,
+			},
+		},
+		{"$skip": 0},
+		{"$limit": 50},
+	}
 
-	return query
+	pipe := collection.Pipe(pipeline)
+	return pipe
+}
+
+func calculateTill() time.Time {
+	return time.Now().Add(-10 * time.Second)
 }

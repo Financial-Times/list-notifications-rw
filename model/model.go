@@ -6,11 +6,11 @@ import (
 
 // InternalNotification represents the document format within Mongo
 type InternalNotification struct {
-	Title string `json:"title"`
-	UUID string `json:"uuid"`
-	EventType string `json:"eventType"`
-	PublishReference string `json:"publishReference"`
-	ChangeDate time.Time `json:"lastModified,omitempty"`
+	Title string `json:"title" bson:"title"`
+	UUID string `json:"uuid" bson:"uuid"`
+	EventType string `json:"eventType" bson:"eventType"`
+	PublishReference string `json:"publishReference" bson:"publishReference"`
+	LastModified time.Time `json:"lastModified,omitempty" bson:"lastModified,omitempty"`
 }
 
 // PublicNotification represents the public format for a notification (seen on read)

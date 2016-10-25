@@ -49,7 +49,7 @@ func (m DefaultMapper) MapInternalNotificationToPublic(notification model.Intern
 		Type: "http://www.ft.com/thing/ThingChangeType/UPDATE",
 		Title: notification.Title,
 		PublishReference: notification.PublishReference,
-		LastModified: notification.ChangeDate.UTC(),
+		LastModified: notification.LastModified.UTC(),
 	}
 }
 
