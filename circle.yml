@@ -2,5 +2,5 @@ general:
   build_dir: bin/list-notifications-rw
 
 test:
-  pre:
-    - pwd && cd ../../
+  override:
+    - pwd && cd ../../ && go test -race -v ./...
