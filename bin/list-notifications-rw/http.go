@@ -15,6 +15,9 @@ func server(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerat
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db))
 	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
 
+	r.HandleFunc("/__health", resources.Health(db))
+	r.HandleFunc("/__gtg", resources.GTG(db))
+
 	server := &http.Server{
 		Handler:      r,
 		Addr:         ":8080",

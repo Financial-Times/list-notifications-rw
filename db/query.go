@@ -1,12 +1,11 @@
 package db
 
 import (
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
-func generatePipe(offset int, since time.Time, collection *mgo.Collection) *mgo.Pipe {
+func generateQuery(offset int, since time.Time) []bson.M {
 	match := getMatch(offset, since)
 
 	group := bson.M{
@@ -51,13 +50,12 @@ func generatePipe(offset int, since time.Time, collection *mgo.Collection) *mgo.
 		{"$limit": maxLimit + 1},
 	}
 
-	pipe := collection.Pipe(pipeline)
-	return pipe
+	return pipeline
 }
 
 func getMatch(offset int, since time.Time) bson.M {
 	shifted := shiftSince(since)
-	till := calculateTill()
+	till := calculateTill(time.Now().UTC())
 
 	if offset > 0 {
 		return bson.M{
@@ -84,6 +82,6 @@ func shiftSince(since time.Time) time.Time {
 	return since.Add(time.Duration(-1 * cacheDelay) * time.Second)
 }
 
-func calculateTill() time.Time {
-	return time.Now().UTC().Add(time.Duration(-1 * cacheDelay) * time.Second)
+func calculateTill(base time.Time) time.Time {
+	return base.Add(time.Duration(-1 * cacheDelay) * time.Second)
 }

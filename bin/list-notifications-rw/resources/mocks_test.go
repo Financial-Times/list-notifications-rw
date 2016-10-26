@@ -42,6 +42,11 @@ func (m MockDB) Limit() int {
 	return args.Int(0)
 }
 
+func (m MockTX) Ping() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 func (m MockTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	args := m.Called(offset, since)
 	notifications := args.Get(0)

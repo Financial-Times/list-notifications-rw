@@ -28,6 +28,10 @@ func (db MongoDB) Limit() int {
 	return db.MaxLimit
 }
 
+func (tx MongoTX) Ping() error {
+	return tx.session.Ping()
+}
+
 func (tx MongoTX) Close(){
 	tx.session.Close()
 }
@@ -40,7 +44,8 @@ func (tx MongoTX) WriteNotification(notification *model.InternalNotification) {
 func (tx MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := tx.session.DB("upp-store").C("notifications")
 
-	pipe := generatePipe(offset, since, collection)
+	query := generateQuery(offset, since)
+	pipe := collection.Pipe(query)
 
 	results := []model.InternalNotification{}
 
@@ -62,6 +67,7 @@ type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
 	Close()
+	Ping() error
 }
 
 type MongoTX struct {
