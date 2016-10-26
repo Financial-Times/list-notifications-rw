@@ -8,7 +8,7 @@ import (
 
 
 func Health(db db.DB) func(w http.ResponseWriter, r *http.Request) {
-	return fthealth.Handler("CheckConnectivityToListsDatabase", "Checks connectivity to MongoDB.", getHealthchecks(db)[0])
+	return fthealth.Handler("list-notifications-rw", "Notifies clients of updates to UPP Lists.", getHealthchecks(db)[0])
 }
 
 func GTG(db db.DB) func(w http.ResponseWriter, r *http.Request) {
