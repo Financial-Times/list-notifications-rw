@@ -18,8 +18,18 @@ func main() {
 			Name: "db",
 			Usage: "MongoDB database connection string (i.e. comma separated list of ip:port)",
 		}),
+		altsrc.NewIntFlag(cli.IntFlag{
+			Name: "limit",
+			Usage: "The max number of results for a notifications query.",
+			Value: 200,
+		}),
+		altsrc.NewIntFlag(cli.IntFlag{
+			Name: "cache-max-age",
+			Usage: "The max age for content records in varnish.",
+			Value: 10,
+		}),
 		altsrc.NewStringFlag(cli.StringFlag{
-			Name: "apiHost",
+			Name: "api-host",
 			Usage: "Api host to use for read responses.",
 			Value: "test.api.ft.com",
 		}),
@@ -40,10 +50,22 @@ func main() {
 	app.Flags = flags
 
 	app.Action = func(ctx *cli.Context){
-		mongo := db.MongoDB{Urls: ctx.String("db"), Timeout: ctx.Int("db-connect-timeout")}
-		mapper := mapping.DefaultMapper{ApiHost: ctx.String("apiHost")}
+		mongo := db.MongoDB{
+			Urls: ctx.String("db"),
+			Timeout: ctx.Int("db-connect-timeout"),
+			MaxLimit: ctx.Int("limit"),
+			CacheDelay: ctx.Int("cache-max-age"),
+		}
 
-		server(mapper, mongo)
+		mapper := mapping.DefaultMapper{ApiHost: ctx.String("api-host")}
+
+		nextLink := mapping.OffsetNextLink{
+			ApiHost: ctx.String("api-host"),
+			CacheDelay: ctx.Int("cache-max-age"),
+			MaxLimit: ctx.Int("limit"),
+		}
+
+		server(mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)

@@ -8,25 +8,34 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"time"
+	"strconv"
 )
 
 type msg struct {
 	Message string `json:"message"`
 }
 
-func ReadNotifications(mapper mapping.NotificationsMapper, db db.DB) func(w http.ResponseWriter, r *http.Request) {
+func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request){
 		param := r.URL.Query().Get("since")
 		if param == "" {
 			logrus.Warn("User didn't provide since date.")
-			writeSinceError(w)
+			writeMessage(400, sinceMessage(), w)
 			return
 		}
 
 		since, err := time.Parse(time.RFC3339Nano, param)
 		if err != nil {
 			logrus.WithError(err).WithField("since", param).Warn("Failed to parse user provided since date.")
-			writeSinceError(w)
+			writeMessage(400, sinceMessage(), w)
+			return
+		}
+
+		offset, err := getOffset(r)
+
+		if err != nil {
+			logrus.WithError(err).Error("User provided offset is not an integer!")
+			writeMessage(400, "Please specify an integer offset.", w)
 			return
 		}
 
@@ -39,7 +48,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, db db.DB) func(w http
 
 		defer tx.Close()
 
-		notifications, err := tx.ReadNotifications(since)
+		notifications, err := tx.ReadNotifications(offset, since)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to query mongo for notifications!")
 			w.WriteHeader(500)
@@ -47,21 +56,47 @@ func ReadNotifications(mapper mapping.NotificationsMapper, db db.DB) func(w http
 		}
 
 		results := make([]model.PublicNotification, 0)
-		for _, n := range *notifications {
+		for i, n := range *notifications {
+			if i >= db.Limit() {
+				continue
+			}
 			results = append(results, mapper.MapInternalNotificationToPublic(n))
+		}
+
+		page := model.PublicNotificationPage{
+			Links: []model.Link{
+				nextLink.NextLink(since, offset, *notifications),
+			},
+			Notifications: results,
+			RequestURL: r.URL.String(),
 		}
 
 		w.Header().Add("Content-Type", "application/json")
 
 		encoder := json.NewEncoder(w)
-		encoder.Encode(results)
+		encoder.Encode(page)
 	}
 }
 
-func writeSinceError(w http.ResponseWriter){
-	w.WriteHeader(400)
+func getOffset(r *http.Request) (offset int, err error) {
+	offset = 0
 
-	m := msg{"A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="+time.Now().UTC().Format(time.RFC3339Nano)+"."}
+	offsetParam := r.URL.Query().Get("offset")
+	if offsetParam != "" {
+		offset, err = strconv.Atoi(offsetParam)
+	}
+
+	return offset, err
+}
+
+func sinceMessage() string {
+	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="+time.Now().UTC().Format(time.RFC3339Nano)+"."
+}
+
+func writeMessage(status int, message string, w http.ResponseWriter){
+	w.WriteHeader(status)
+
+	m := msg{message}
 	encoder := json.NewEncoder(w)
 	encoder.Encode(m)
 

@@ -11,6 +11,7 @@ import (
 )
 
 var testMapper = mapping.DefaultMapper{ApiHost: "testing-123.com"}
+var testLinkGenerator = mapping.OffsetNextLink{ApiHost: "testing-123.com", CacheDelay: 10, MaxLimit: 200}
 
 func WriteRoute(handler func(w http.ResponseWriter, r *http.Request)) *mux.Router {
 	r := mux.NewRouter()
@@ -36,8 +37,13 @@ func (m MockDB) Open() (db.TX, error) {
 	return tx.(db.TX), args.Error(1)
 }
 
-func (m MockTX) ReadNotifications(since time.Time) (*[]model.InternalNotification, error) {
-	args := m.Called(since)
+func (m MockDB) Limit() int {
+	args := m.Called()
+	return args.Int(0)
+}
+
+func (m MockTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
+	args := m.Called(offset, since)
 	notifications := args.Get(0)
 	if notifications == nil {
 		return nil, args.Error(1)

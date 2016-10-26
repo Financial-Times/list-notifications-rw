@@ -6,17 +6,8 @@ import (
 	"time"
 )
 
-func generatePipe(since time.Time, collection *mgo.Collection) *mgo.Pipe {
-	till := calculateTill()
-
-	match := bson.M{
-		"$match": bson.M{
-			"lastModified": bson.M {
-				"$gt": since,
-				"$lt": till,
-			},
-		},
-	}
+func generatePipe(offset int, since time.Time, collection *mgo.Collection) *mgo.Pipe {
+	match := getMatch(offset, since)
 
 	group := bson.M{
 		"$group": bson.M{
@@ -56,14 +47,43 @@ func generatePipe(since time.Time, collection *mgo.Collection) *mgo.Pipe {
 				"_id": 1,
 			},
 		},
-		{"$skip": 0},
-		{"$limit": 50},
+		{"$skip": offset},
+		{"$limit": maxLimit + 1},
 	}
 
 	pipe := collection.Pipe(pipeline)
 	return pipe
 }
 
+func getMatch(offset int, since time.Time) bson.M {
+	shifted := shiftSince(since)
+	till := calculateTill()
+
+	if offset > 0 {
+		return bson.M{
+			"$match": bson.M{
+				"lastModified": bson.M {
+					"$gte": shifted,
+					"$lte": till,
+				},
+			},
+		}
+	}
+
+	return bson.M{
+		"$match": bson.M{
+			"lastModified": bson.M {
+				"$gt": shifted,
+				"$lt": till,
+			},
+		},
+	}
+}
+
+func shiftSince(since time.Time) time.Time {
+	return since.Add(time.Duration(-1 * cacheDelay) * time.Second)
+}
+
 func calculateTill() time.Time {
-	return time.Now().Add(-10 * time.Second)
+	return time.Now().UTC().Add(time.Duration(-1 * cacheDelay) * time.Second)
 }

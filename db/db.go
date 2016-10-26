@@ -6,25 +6,8 @@ import (
 	"time"
 )
 
-type DB interface {
-	Open() (TX, error)
-}
-
-type TX interface {
-	WriteNotification(notification *model.InternalNotification)
-	ReadNotifications(since time.Time) (*[]model.InternalNotification, error)
-	Close()
-}
-
-type MongoTX struct {
-	session *mgo.Session
-}
-
-type MongoDB struct {
-	Urls string
-	Timeout int
-	session *mgo.Session
-}
+var maxLimit = 200
+var cacheDelay = 10
 
 func (db MongoDB) Open() (TX, error) {
 	if db.session == nil {
@@ -33,9 +16,16 @@ func (db MongoDB) Open() (TX, error) {
 			return nil, err
 		}
 		db.session = session
+
+		maxLimit = db.MaxLimit
+		cacheDelay = db.CacheDelay
 	}
 
 	return &MongoTX{db.session.Copy()}, nil
+}
+
+func (db MongoDB) Limit() int {
+	return db.MaxLimit
 }
 
 func (tx MongoTX) Close(){
@@ -47,10 +37,10 @@ func (tx MongoTX) WriteNotification(notification *model.InternalNotification) {
 	collection.Insert(notification)
 }
 
-func (tx MongoTX) ReadNotifications(since time.Time) (*[]model.InternalNotification, error) {
+func (tx MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := tx.session.DB("upp-store").C("notifications")
 
-	pipe := generatePipe(since, collection)
+	pipe := generatePipe(offset, since, collection)
 
 	results := []model.InternalNotification{}
 
@@ -61,4 +51,27 @@ func (tx MongoTX) ReadNotifications(since time.Time) (*[]model.InternalNotificat
 	}
 
 	return &results, nil
+}
+
+type DB interface {
+	Open() (TX, error)
+	Limit() int // bit hacky, but limit is exposed to resources here
+}
+
+type TX interface {
+	WriteNotification(notification *model.InternalNotification)
+	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
+	Close()
+}
+
+type MongoTX struct {
+	session *mgo.Session
+}
+
+type MongoDB struct {
+	Urls string
+	Timeout int
+	MaxLimit int
+	CacheDelay int
+	session *mgo.Session
 }

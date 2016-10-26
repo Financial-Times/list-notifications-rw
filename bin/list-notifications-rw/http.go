@@ -10,9 +10,9 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 )
 
-func server(mapper mapping.NotificationsMapper, db db.DB){
+func server(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB){
 	r := mux.NewRouter()
-	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, db))
+	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db))
 	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
 
 	server := &http.Server{

@@ -21,6 +21,7 @@ func TestReadNotifications(t *testing.T) {
 	mockTx := new(MockTX)
 
 	mockDb.On("Open").Return(mockTx, nil)
+	mockDb.On("Limit").Return(1)
 
 	changeDate := time.Now()
 	mockNotifications := []model.InternalNotification{
@@ -31,12 +32,19 @@ func TestReadNotifications(t *testing.T) {
 			EventType: "UPDATE",
 			PublishReference: "tid_blah-blah-blah",
 		},
+		{
+			UUID: "uuid2",
+			Title: "title",
+			LastModified: changeDate,
+			EventType: "UPDATE",
+			PublishReference: "tid_blah-blah-blah",
+		},
 	}
 
 	mockTx.On("Close").Return()
-	mockTx.On("ReadNotifications", mockSince).Return(&mockNotifications, nil)
+	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
 	if w.Code != 200 {
 		t.Fatal("Everything should be OK but we didn't return 200!")
@@ -47,8 +55,10 @@ func TestReadNotifications(t *testing.T) {
 	}
 
 	decoder := json.NewDecoder(w.Body)
-	results := []model.PublicNotification{}
-	decoder.Decode(&results)
+	page := model.PublicNotificationPage{}
+	decoder.Decode(&page)
+
+	results := page.Notifications
 
 	// TODO: Mock the mapper?
 	assert.Len(t, results, 1, "Data should contain one item!")
@@ -71,7 +81,7 @@ func Test400NoSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
 	if w.Code != 400 {
 		t.Fatal("No since date! Should be 400!")
@@ -87,7 +97,7 @@ func Test400JunkSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
 	if w.Code != 400 {
 		t.Fatal("The since date was garbage! Should be 400!")
@@ -105,7 +115,7 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 	mockDb := new(MockDB)
 	mockDb.On("Open").Return(nil, errors.New("I broke soz"))
 
-	ReadNotifications(testMapper, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
 	if w.Code != 500 {
 		t.Fatal("Mongo was broken but we didn't return 500!")
@@ -115,10 +125,27 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 	t.Log("Recorded 500 response as expected, and since date was accepted.")
 }
 
-func TestFailedToQuery(t *testing.T) {
+func TestInvalidOffset(t *testing.T) {
+	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=i-am-soooo-wrong", nil)
+
+	w := httptest.NewRecorder()
+
+	mockDb := new(MockDB)
+
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+
+	if w.Code != 400 {
+		t.Fatal("Offset was invalid but we didn't 400!")
+	}
+
+	mockDb.AssertNotCalled(t, "Open")
+	t.Log("Recorded 400 response as expected.")
+}
+
+func TestFailedToQueryAndOffset(t *testing.T) {
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
+	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=100", nil)
 
 	w := httptest.NewRecorder()
 
@@ -126,10 +153,10 @@ func TestFailedToQuery(t *testing.T) {
 	mockTx := new(MockTX)
 
 	mockTx.On("Close").Return()
-	mockTx.On("ReadNotifications", mockSince).Return(nil, errors.New("I broke again soz"))
+	mockTx.On("ReadNotifications", 100, mockSince).Return(nil, errors.New("I broke again soz"))
 	mockDb.On("Open").Return(mockTx, nil)
 
-	ReadNotifications(testMapper, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
 	if w.Code != 500 {
 		t.Fatal("Mongo failed to query but we didn't return 500!")

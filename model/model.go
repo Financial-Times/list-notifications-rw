@@ -22,3 +22,16 @@ type PublicNotification struct {
 	PublishReference string `json:"publishReference,omitempty"`
 	LastModified time.Time `json:"lastModified,omitempty"`
 }
+
+// Link represents the next url in the notification page
+type Link struct {
+	Href string `json:"href"`
+	Rel string `json:"rel"`
+}
+
+// PublicNotificationPage represents one page in the result set
+type PublicNotificationPage struct {
+	RequestURL string `json:"requestUrl"`
+	Notifications []PublicNotification `json:"notifications"`
+	Links []Link `json:"links"`
+}
