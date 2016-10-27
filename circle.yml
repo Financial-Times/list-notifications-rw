@@ -12,6 +12,8 @@ machine:
       - sudo tar -C /usr/local -xzf .download/$GODIST
 
 dependencies:
+  pre:
+    - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html
   cache_directories:
     - ~/.download
   override:
@@ -25,3 +27,6 @@ dependencies:
 test:
   override:
     - cd $APP_DIR && go test -race -v ./...
+    - cd $APP_DIR && gocov test ./... > ~/coverage.json
+  post:
+    - gocov-html ~/coverage.json > $CIRCLE_ARTIFACTS/coverage.html
