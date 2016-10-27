@@ -1,3 +1,5 @@
 .idea
 /coverage.*
 /list-notifications-rw
+/report.xml
+/junit.xml
