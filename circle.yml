@@ -13,7 +13,7 @@ machine:
 
 dependencies:
   pre:
-    - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html
+    - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
   cache_directories:
     - ~/.download
   override:
@@ -26,7 +26,8 @@ dependencies:
 
 test:
   override:
-    - cd $APP_DIR && go test -race -v ./...
+    - mkdir -p $CIRCLE_TEST_REPORTS/golang
+    - cd $APP_DIR && go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
     - cd $APP_DIR && gocov test ./... > ~/coverage.json
   post:
     - gocov-html ~/coverage.json > $CIRCLE_ARTIFACTS/coverage.html

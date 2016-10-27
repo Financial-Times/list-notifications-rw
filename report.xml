@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+	<testsuite tests="21" failures="0" time="0.012" name="github.com/Financial-Times/list-notifications-rw/bin/list-notifications-rw/resources">
+		<properties>
+			<property name="go.version" value="go1.7"></property>
+		</properties>
+		<testcase classname="resources" name="TestFilterSyntheticTransactions" time="0.000"></testcase>
+		<testcase classname="resources" name="TestAllowsNormalTransactions" time="0.000"></testcase>
+		<testcase classname="resources" name="TestAllowsNoTID" time="0.000"></testcase>
+		<testcase classname="resources" name="TestHealthy" time="0.000"></testcase>
+		<testcase classname="resources" name="TestUnhealthy" time="0.000"></testcase>
+		<testcase classname="resources" name="TestWorkingGTG" time="0.000"></testcase>
+		<testcase classname="resources" name="TestFailingGTG" time="0.000"></testcase>
+		<testcase classname="resources" name="TestFailingDBGTG" time="0.000"></testcase>
+		<testcase classname="resources" name="TestReadNotifications" time="0.000"></testcase>
+		<testcase classname="resources" name="Test400NoSinceDate" time="0.000"></testcase>
+		<testcase classname="resources" name="Test400JunkSinceDate" time="0.000"></testcase>
+		<testcase classname="resources" name="TestFailedDatabaseOnRead" time="0.000"></testcase>
+		<testcase classname="resources" name="TestInvalidOffset" time="0.000"></testcase>
+		<testcase classname="resources" name="TestFailedToQueryAndOffset" time="0.000"></testcase>
+		<testcase classname="resources" name="TestWriteNotification" time="0.000"></testcase>
+		<testcase classname="resources" name="TestNotJson" time="0.000"></testcase>
+		<testcase classname="resources" name="TestNoUUID" time="0.000"></testcase>
+		<testcase classname="resources" name="TestInvalidUUID" time="0.000"></testcase>
+		<testcase classname="resources" name="TestUUIDDoesNotMatch" time="0.000"></testcase>
+		<testcase classname="resources" name="TestInvalidUUIDInPath" time="0.000"></testcase>
+		<testcase classname="resources" name="TestFailedDatabaseOnWrite" time="0.000"></testcase>
+	</testsuite>
+	<testsuite tests="5" failures="0" time="0.010" name="github.com/Financial-Times/list-notifications-rw/db">
+		<properties>
+			<property name="go.version" value="go1.7"></property>
+		</properties>
+		<testcase classname="db" name="TestShiftSince" time="0.000"></testcase>
+		<testcase classname="db" name="TestCalculateTillDate" time="0.000"></testcase>
+		<testcase classname="db" name="TestGetMatchNoOffset" time="0.000"></testcase>
+		<testcase classname="db" name="TestGetMatchWithOffset" time="0.000"></testcase>
+		<testcase classname="db" name="TestQuery" time="0.000"></testcase>
+	</testsuite>
+	<testsuite tests="14" failures="0" time="0.010" name="github.com/Financial-Times/list-notifications-rw/mapping">
+		<properties>
+			<property name="go.version" value="go1.7"></property>
+		</properties>
+		<testcase classname="mapping" name="TestNextLink" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestGenerateLinkWithOffset" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestGenerateLinkWithoutOffset" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestBoundaryHasSameDate" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestBoundaryHasDifferentDate" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestBoundarySize" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateOffsetNoNotifications" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateOffsetLessThanMax" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateOffsetNoBoundary" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateOffsetAllSame" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateOffset" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateSinceNoResults" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateSinceFullPage" time="0.000"></testcase>
+		<testcase classname="mapping" name="TestCalculateSincePartialPage" time="0.000"></testcase>
+	</testsuite>
+</testsuites>
