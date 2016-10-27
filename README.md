@@ -6,7 +6,9 @@ Responsible for serving a writing notifications for lists. Similar in functional
 ## Installation
 
 ```sh
-go get github.com/Financial-Times/list-notifications-rw ./...
+go get github.com/Financial-Times/list-notifications-rw
+cd $GOPATH/src/github.com/Financial-Times/list-notifications-rw
+go get -u -t -v ./...
 ```
 
 ## Build
@@ -15,4 +17,12 @@ Due to the structure of the project, to build the binary into the root directory
 
 ```sh
 go build ./bin/list-notification-rw
+```
+
+## Test
+
+Testing works as normal
+
+```sh
+go test -v -race ./...
 ```
