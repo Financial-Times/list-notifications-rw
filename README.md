@@ -1,5 +1,5 @@
 # List Notifications R/W
-[![CircleCI](https://circleci.com/gh/Financial-Times/list-notifications-rw.svg?style=svg)](https://circleci.com/gh/Financial-Times/list-notifications-rw)
+[![CircleCI](https://circleci.com/gh/Financial-Times/list-notifications-rw.svg?style=svg)](https://circleci.com/gh/Financial-Times/list-notifications-rw) [![Go Report Card](https://goreportcard.com/badge/github.com/Financial-Times/list-notifications-rw)](https://goreportcard.com/report/github.com/Financial-Times/list-notifications-rw)
 
 Responsible for serving a writing notifications for lists. Similar in functionality to the Java-based `notifications-rw`.
 
