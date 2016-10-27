@@ -1,8 +1,9 @@
 package db
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 func generateQuery(offset int, since time.Time) []bson.M {
@@ -36,14 +37,14 @@ func generateQuery(offset int, since time.Time) []bson.M {
 		{
 			"$sort": bson.M{
 				"lastModified": -1,
-				"uuid": 1,
+				"uuid":         1,
 			},
 		},
 		group,
 		{
 			"$sort": bson.M{
 				"lastModified": 1,
-				"_id": 1,
+				"_id":          1,
 			},
 		},
 		{"$skip": offset},
@@ -60,7 +61,7 @@ func getMatch(offset int, since time.Time) bson.M {
 	if offset > 0 {
 		return bson.M{
 			"$match": bson.M{
-				"lastModified": bson.M {
+				"lastModified": bson.M{
 					"$gte": shifted,
 					"$lte": till,
 				},
@@ -70,7 +71,7 @@ func getMatch(offset int, since time.Time) bson.M {
 
 	return bson.M{
 		"$match": bson.M{
-			"lastModified": bson.M {
+			"lastModified": bson.M{
 				"$gt": shifted,
 				"$lt": till,
 			},
@@ -79,9 +80,9 @@ func getMatch(offset int, since time.Time) bson.M {
 }
 
 func shiftSince(since time.Time) time.Time {
-	return since.Add(time.Duration(-1 * cacheDelay) * time.Second)
+	return since.Add(time.Duration(-1*cacheDelay) * time.Second)
 }
 
 func calculateTill(base time.Time) time.Time {
-	return base.Add(time.Duration(-1 * cacheDelay) * time.Second)
+	return base.Add(time.Duration(-1*cacheDelay) * time.Second)
 }

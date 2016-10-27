@@ -1,19 +1,20 @@
 package db
 
 import (
+	"regexp"
 	"testing"
 	"time"
+
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/mgo.v2/bson"
-	"regexp"
 )
 
-func TestShiftSince(t *testing.T){
+func TestShiftSince(t *testing.T) {
 	cacheDelay = 42
 	now := time.Now()
 
 	shifted := shiftSince(now)
-	assert.Equal(t, now.Add(-42 * time.Second), shifted, "Should've been shifted by 42s!")
+	assert.Equal(t, now.Add(-42*time.Second), shifted, "Should've been shifted by 42s!")
 }
 
 func TestCalculateTillDate(t *testing.T) {
@@ -21,10 +22,10 @@ func TestCalculateTillDate(t *testing.T) {
 	cacheDelay = 48
 
 	till := calculateTill(now)
-	assert.Equal(t, now.Add(-48 * time.Second), till, "Should've been shifted by 48s!")
+	assert.Equal(t, now.Add(-48*time.Second), till, "Should've been shifted by 48s!")
 }
 
-func TestGetMatchNoOffset(t *testing.T){
+func TestGetMatchNoOffset(t *testing.T) {
 	since := time.Now().UTC()
 
 	match := getMatch(0, since)
@@ -34,7 +35,7 @@ func TestGetMatchNoOffset(t *testing.T){
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }
 
-func TestGetMatchWithOffset(t *testing.T){
+func TestGetMatchWithOffset(t *testing.T) {
 	since, _ := time.Parse(time.RFC3339Nano, "2016-10-26T16:15:09.46Z")
 
 	match := getMatch(60, since)
@@ -44,7 +45,7 @@ func TestGetMatchWithOffset(t *testing.T){
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }
 
-func TestQuery(t *testing.T){
+func TestQuery(t *testing.T) {
 	since, _ := time.Parse(time.RFC3339Nano, "2016-10-26T16:15:09.46Z")
 	maxLimit = 102
 

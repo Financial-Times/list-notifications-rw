@@ -1,22 +1,24 @@
 package resources
 
 import (
-	"net/http"
-	"github.com/Financial-Times/list-notifications-rw/db"
-	"github.com/Sirupsen/logrus"
 	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
-	"time"
-	"strconv"
+	"github.com/Sirupsen/logrus"
 )
 
 type msg struct {
 	Message string `json:"message"`
 }
 
+// ReadNotifications reads notifications from the backing db
 func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request){
+	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {
 			logrus.Warn("User didn't provide since date.")
@@ -55,7 +57,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 			return
 		}
 
-		results := make([]model.PublicNotification, 0)
+		var results []model.PublicNotification
 		for i, n := range *notifications {
 			if i >= db.Limit() {
 				continue
@@ -68,7 +70,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 				nextLink.NextLink(since, offset, *notifications),
 			},
 			Notifications: results,
-			RequestURL: r.URL.String(),
+			RequestURL:    r.URL.String(),
 		}
 
 		w.Header().Add("Content-Type", "application/json")
@@ -90,10 +92,10 @@ func getOffset(r *http.Request) (offset int, err error) {
 }
 
 func sinceMessage() string {
-	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="+time.Now().UTC().Format(time.RFC3339Nano)+"."
+	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=" + time.Now().UTC().Format(time.RFC3339Nano) + "."
 }
 
-func writeMessage(status int, message string, w http.ResponseWriter){
+func writeMessage(status int, message string, w http.ResponseWriter) {
 	w.WriteHeader(status)
 
 	m := msg{message}

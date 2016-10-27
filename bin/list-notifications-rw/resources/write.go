@@ -1,17 +1,18 @@
 package resources
 
 import (
-	"net/http"
-	"github.com/Financial-Times/list-notifications-rw/db"
-	"github.com/Sirupsen/logrus"
 	"encoding/json"
+	"net/http"
+
+	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 )
 
-
+// WriteNotification will write a new notification for the provided list.
 func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request){
+	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		uuid := mux.Vars(r)["uuid"]
 
@@ -41,7 +42,7 @@ func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http
 	}
 }
 
-func writeError(message string, status int, w http.ResponseWriter){
+func writeError(message string, status int, w http.ResponseWriter) {
 	w.WriteHeader(status)
 
 	m := msg{Message: message}

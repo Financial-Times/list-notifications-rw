@@ -1,14 +1,14 @@
 package resources
 
 import (
-	"testing"
+	"encoding/json"
+	"errors"
 	"net/http/httptest"
 	"strings"
-	"errors"
-	"encoding/json"
+	"testing"
 )
 
-var mockWriteBody = `{"uuid":"ef863741-709a-4062-a8f1-987c44db1db5","title":"Unlocking Yield Top Stories","concept":{"uuid":"3095386b-bb12-37af-bb7b-b84390937caf","prefLabel":"Investing 2.0: Unlocking Yield"},"listType":"SpecialReports","items":[{"uuid":"2b3c6398-7f3f-11e6-8e50-8ec15fb462f4"},{"uuid":"0de7bf4c-8c08-11e6-8aa5-f79f5696c731"},{"uuid":"6c9109fc-8b9c-11e6-8cb7-e7ada1d123b1"},{"uuid":"f3e173f2-8ae7-11e6-8aa5-f79f5696c731"},{"uuid":"5c94a898-8952-11e6-8aa5-f79f5696c731"}],"publishReference":"tid_uvo7bcngao","lastModified":"2016-10-20T17:08:37.668Z"}`;
+var mockWriteBody = `{"uuid":"ef863741-709a-4062-a8f1-987c44db1db5","title":"Unlocking Yield Top Stories","concept":{"uuid":"3095386b-bb12-37af-bb7b-b84390937caf","prefLabel":"Investing 2.0: Unlocking Yield"},"listType":"SpecialReports","items":[{"uuid":"2b3c6398-7f3f-11e6-8e50-8ec15fb462f4"},{"uuid":"0de7bf4c-8c08-11e6-8aa5-f79f5696c731"},{"uuid":"6c9109fc-8b9c-11e6-8cb7-e7ada1d123b1"},{"uuid":"f3e173f2-8ae7-11e6-8aa5-f79f5696c731"},{"uuid":"5c94a898-8952-11e6-8aa5-f79f5696c731"}],"publishReference":"tid_uvo7bcngao","lastModified":"2016-10-20T17:08:37.668Z"}`
 
 func TestWriteNotification(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(mockWriteBody))

@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"testing"
-	"net/http/httptest"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestFilterSyntheticTransactions(t *testing.T) {
@@ -12,7 +12,7 @@ func TestFilterSyntheticTransactions(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
-	req.Header.Add(tid_header, synth_tid_prefix + "_a-fake-tid-which-should-be-rejected-if-all-goes-well")
+	req.Header.Add(tidHeader, synthTidPrefix+"_a-fake-tid-which-should-be-rejected-if-all-goes-well")
 
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)
@@ -28,7 +28,7 @@ func TestAllowsNormalTransactions(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
-	req.Header.Add(tid_header, "tid_123761283")
+	req.Header.Add(tidHeader, "tid_123761283")
 
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)

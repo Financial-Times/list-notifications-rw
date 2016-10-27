@@ -1,12 +1,13 @@
 package resources
 
 import (
-	"testing"
-	"net/http/httptest"
-	"time"
-	"github.com/Financial-Times/list-notifications-rw/model"
-	"errors"
 	"encoding/json"
+	"errors"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,17 +27,17 @@ func TestReadNotifications(t *testing.T) {
 	changeDate := time.Now()
 	mockNotifications := []model.InternalNotification{
 		{
-			UUID: "uuid",
-			Title: "title",
-			LastModified: changeDate,
-			EventType: "UPDATE",
+			UUID:             "uuid",
+			Title:            "title",
+			LastModified:     changeDate,
+			EventType:        "UPDATE",
 			PublishReference: "tid_blah-blah-blah",
 		},
 		{
-			UUID: "uuid2",
-			Title: "title",
-			LastModified: changeDate,
-			EventType: "UPDATE",
+			UUID:             "uuid2",
+			Title:            "title",
+			LastModified:     changeDate,
+			EventType:        "UPDATE",
 			PublishReference: "tid_blah-blah-blah",
 		},
 	}
@@ -62,8 +63,8 @@ func TestReadNotifications(t *testing.T) {
 
 	// TODO: Mock the mapper?
 	assert.Len(t, results, 1, "Data should contain one item!")
-	assert.Equal(t, "http://testing-123.com/things/uuid", results[0].Id)
-	assert.Equal(t, "http://testing-123.com/lists/uuid", results[0].ApiUrl)
+	assert.Equal(t, "http://testing-123.com/things/uuid", results[0].ID)
+	assert.Equal(t, "http://testing-123.com/lists/uuid", results[0].APIURL)
 	assert.Equal(t, "http://www.ft.com/thing/ThingChangeType/UPDATE", results[0].Type)
 	assert.Equal(t, "title", results[0].Title)
 	assert.Equal(t, changeDate.UTC(), results[0].LastModified)

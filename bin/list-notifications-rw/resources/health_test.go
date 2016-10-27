@@ -1,11 +1,12 @@
 package resources
 
 import (
-	"testing"
-	"net/http/httptest"
-	"errors"
-	"github.com/Financial-Times/go-fthealth"
 	"encoding/json"
+	"errors"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/Financial-Times/go-fthealth"
 	"github.com/stretchr/testify/assert"
 )
 

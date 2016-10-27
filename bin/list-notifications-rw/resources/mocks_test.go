@@ -1,13 +1,14 @@
 package resources
 
 import (
-	"github.com/stretchr/testify/mock"
-	"github.com/Financial-Times/list-notifications-rw/db"
-	"time"
-	"github.com/Financial-Times/list-notifications-rw/model"
-	"github.com/Financial-Times/list-notifications-rw/mapping"
-	"github.com/gorilla/mux"
 	"net/http"
+	"time"
+
+	"github.com/Financial-Times/list-notifications-rw/db"
+	"github.com/Financial-Times/list-notifications-rw/mapping"
+	"github.com/Financial-Times/list-notifications-rw/model"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/mock"
 )
 
 var testMapper = mapping.DefaultMapper{ApiHost: "testing-123.com"}
@@ -57,7 +58,7 @@ func (m MockTX) ReadNotifications(offset int, since time.Time) (*[]model.Interna
 	return notifications.(*[]model.InternalNotification), args.Error(1)
 }
 
-func (m MockTX) WriteNotification(notification *model.InternalNotification){
+func (m MockTX) WriteNotification(notification *model.InternalNotification) {
 	m.Called(notification)
 }
 

@@ -1,17 +1,17 @@
 package mapping
 
 import (
-	"testing"
-	"github.com/Financial-Times/list-notifications-rw/model"
-	"time"
-	"github.com/stretchr/testify/assert"
 	"net/url"
+	"testing"
+	"time"
+
+	"github.com/Financial-Times/list-notifications-rw/model"
+	"github.com/stretchr/testify/assert"
 )
 
 var nextLink = OffsetNextLink{ApiHost: "go-tests.ft.com", MaxLimit: 200, CacheDelay: 10}
 
-
-func TestNextLink(t *testing.T){
+func TestNextLink(t *testing.T) {
 	now := time.Now()
 	since := now.Add(-20 * time.Second)
 
@@ -37,7 +37,7 @@ func TestNextLink(t *testing.T){
 	assert.Equal(t, nextLink.generateLink(calculated, offset).Href, link.Href, "Should match generated link.")
 }
 
-func TestGenerateLinkWithOffset(t *testing.T){
+func TestGenerateLinkWithOffset(t *testing.T) {
 	now := time.Now().UTC()
 
 	link := nextLink.generateLink(now, 10)
@@ -47,7 +47,7 @@ func TestGenerateLinkWithOffset(t *testing.T){
 	assert.Equal(t, uri.String(), link.Href, "This is the link we should generate")
 }
 
-func TestGenerateLinkWithoutOffset(t *testing.T){
+func TestGenerateLinkWithoutOffset(t *testing.T) {
 	now := time.Now().UTC()
 
 	link := nextLink.generateLink(now, 0)
@@ -57,7 +57,7 @@ func TestGenerateLinkWithoutOffset(t *testing.T){
 	assert.Equal(t, uri.String(), link.Href, "This is the link we should generate")
 }
 
-func TestBoundaryHasSameDate(t *testing.T){
+func TestBoundaryHasSameDate(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -70,7 +70,7 @@ func TestBoundaryHasSameDate(t *testing.T){
 	assert.True(t, result, "Boundary has the same change date, so should be true.")
 }
 
-func TestBoundaryHasDifferentDate(t *testing.T){
+func TestBoundaryHasDifferentDate(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -83,7 +83,7 @@ func TestBoundaryHasDifferentDate(t *testing.T){
 	assert.False(t, result, "Boundary has a different change date, so should be false.")
 }
 
-func TestBoundarySize(t *testing.T){
+func TestBoundarySize(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -99,19 +99,19 @@ func TestBoundarySize(t *testing.T){
 	assert.False(t, notifications[0].LastModified == now, "The collection should remain the same!")
 }
 
-func TestCalculateOffsetNoNotifications(t *testing.T){
+func TestCalculateOffsetNoNotifications(t *testing.T) {
 	notifications := make([]model.InternalNotification, 0)
 	offset := nextLink.calculateOffset(notifications, 0)
 	assert.Equal(t, 0, offset, "Should equal current offset (which is 0)")
 }
 
-func TestCalculateOffsetLessThanMax(t *testing.T){
+func TestCalculateOffsetLessThanMax(t *testing.T) {
 	notifications := make([]model.InternalNotification, 2)
 	offset := nextLink.calculateOffset(notifications, 80)
 	assert.Equal(t, 0, offset, "Should equal 0, regardless of current offset")
 }
 
-func TestCalculateOffsetNoBoundary(t *testing.T){
+func TestCalculateOffsetNoBoundary(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -125,7 +125,7 @@ func TestCalculateOffsetNoBoundary(t *testing.T){
 	assert.Equal(t, 0, offset, "Should equal 0, regardless of current offset")
 }
 
-func TestCalculateOffsetAllSame(t *testing.T){
+func TestCalculateOffsetAllSame(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -139,7 +139,7 @@ func TestCalculateOffsetAllSame(t *testing.T){
 	assert.Equal(t, 7, offset, "Should equal current offset + size of collection - 1 = 7")
 }
 
-func TestCalculateOffset(t *testing.T){
+func TestCalculateOffset(t *testing.T) {
 	now := time.Now()
 
 	notifications := []model.InternalNotification{
@@ -154,7 +154,7 @@ func TestCalculateOffset(t *testing.T){
 	assert.Equal(t, 1, offset, "Should equal size of boundary (2) - 1 = 1")
 }
 
-func TestCalculateSinceNoResults(t *testing.T){
+func TestCalculateSinceNoResults(t *testing.T) {
 	now := time.Now()
 
 	notifications := make([]model.InternalNotification, 0)
@@ -162,7 +162,7 @@ func TestCalculateSinceNoResults(t *testing.T){
 	assert.Equal(t, now, since, "Length 0, so should return the same since date")
 }
 
-func TestCalculateSinceFullPage(t *testing.T){
+func TestCalculateSinceFullPage(t *testing.T) {
 	now := time.Now()
 	notifications := []model.InternalNotification{
 		{LastModified: now.Add(-10 * time.Second)},
@@ -173,11 +173,11 @@ func TestCalculateSinceFullPage(t *testing.T){
 
 	nextLink.MaxLimit = 3
 	nextLink.CacheDelay = 5
-	since := nextLink.calculateSince(notifications, now.Add(-20 * time.Second))
-	assert.Equal(t, now.Add(-3 * time.Second).Add(5 * time.Second), since, "Should return second to last in set + cache delay")
+	since := nextLink.calculateSince(notifications, now.Add(-20*time.Second))
+	assert.Equal(t, now.Add(-3*time.Second).Add(5*time.Second), since, "Should return second to last in set + cache delay")
 }
 
-func TestCalculateSincePartialPage(t *testing.T){
+func TestCalculateSincePartialPage(t *testing.T) {
 	now := time.Now()
 	notifications := []model.InternalNotification{
 		{LastModified: now.Add(-10 * time.Second)},
@@ -188,6 +188,6 @@ func TestCalculateSincePartialPage(t *testing.T){
 
 	nextLink.MaxLimit = 6
 	nextLink.CacheDelay = 5
-	since := nextLink.calculateSince(notifications, now.Add(-20 * time.Second))
-	assert.Equal(t, now.Add(-1 * time.Second).Add(5 * time.Second), since, "Should return last in set + cache delay.")
+	since := nextLink.calculateSince(notifications, now.Add(-20*time.Second))
+	assert.Equal(t, now.Add(-1*time.Second).Add(5*time.Second), since, "Should return last in set + cache delay.")
 }

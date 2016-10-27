@@ -1,23 +1,27 @@
 package mapping
 
 import (
-	"github.com/Financial-Times/list-notifications-rw/model"
-	"sort"
-	"time"
 	"net/url"
+	"sort"
 	"strconv"
+	"time"
+
+	"github.com/Financial-Times/list-notifications-rw/model"
 )
 
+// NextLinkGenerator returns the link to the next result set in a paginated response.
 type NextLinkGenerator interface {
 	NextLink(since time.Time, offset int, notifications []model.InternalNotification) model.Link
 }
 
+// OffsetNextLink is the default implementation for NextLinkGenerator
 type OffsetNextLink struct {
-	ApiHost string
+	ApiHost    string
 	CacheDelay int
-	MaxLimit int
+	MaxLimit   int
 }
 
+// NextLink given the since date and offset from the original incoming request, and the notifications read from the db, return the 'next' link
 func (o OffsetNextLink) NextLink(since time.Time, offset int, notifications []model.InternalNotification) model.Link {
 	updatedSince := o.calculateSince(notifications, since)
 	updatedOffset := o.calculateOffset(notifications, offset)
@@ -41,7 +45,7 @@ func (o OffsetNextLink) generateLink(since time.Time, offset int) model.Link {
 
 	return model.Link{
 		Href: uri.String(),
-		Rel: "next",
+		Rel:  "next",
 	}
 }
 
@@ -50,7 +54,7 @@ func (o OffsetNextLink) calculateSince(notifications []model.InternalNotificatio
 		return since
 	}
 
-	last := notifications[min(len(notifications), o.MaxLimit) - 1] // make sure we know this is the last page
+	last := notifications[min(len(notifications), o.MaxLimit)-1] // make sure we know this is the last page
 	return o.normalizeForCacheDelay(last.LastModified)
 }
 
@@ -89,7 +93,7 @@ func min(a, b int) int {
 
 func checkBoundary(notifications []model.InternalNotification) bool {
 	size := len(notifications)
-	lastResult, boundaryResult := notifications[size - 2], notifications[size - 1]
+	lastResult, boundaryResult := notifications[size-2], notifications[size-1]
 
 	return lastResult.LastModified == boundaryResult.LastModified
 }
@@ -115,6 +119,7 @@ func sizeOfBoundary(notifications []model.InternalNotification) int {
 	return size
 }
 
+// ByLastModified sorts InternalNotifications by last modified date.
 type ByLastModified []model.InternalNotification
 
 func (s ByLastModified) Len() int {
