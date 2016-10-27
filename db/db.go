@@ -66,8 +66,8 @@ type DB interface {
 type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
-	Close()
 	Ping() error
+	Close()
 }
 
 type MongoTX struct {
