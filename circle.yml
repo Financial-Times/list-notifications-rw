@@ -21,7 +21,7 @@ dependencies:
     - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME $APP_DIR
     - |
       echo 'export GOPATH=$GOPATH:$HOME/.go_project' >> ~/.circlerc
-    - cd $APP_DIR && go get -u -t -v ./...
+    - cd $APP_DIR && go get -d -t -v ./...
     - cd $APP_DIR && go build -v ./bin/list-notifications-rw
 
 test:
