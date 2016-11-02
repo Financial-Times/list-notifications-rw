@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -14,8 +15,7 @@ import (
 func TestReadNotifications(t *testing.T) {
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
@@ -77,8 +77,7 @@ func TestReadNotifications(t *testing.T) {
 }
 
 func Test400NoSinceDate(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
@@ -93,8 +92,7 @@ func Test400NoSinceDate(t *testing.T) {
 }
 
 func Test400JunkSinceDate(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=some-garbage-date", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=some-garbage-date", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
@@ -109,8 +107,7 @@ func Test400JunkSinceDate(t *testing.T) {
 }
 
 func TestFailedDatabaseOnRead(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
@@ -127,8 +124,7 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 }
 
 func TestInvalidOffset(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=i-am-soooo-wrong", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=i-am-soooo-wrong", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
@@ -146,8 +142,7 @@ func TestInvalidOffset(t *testing.T) {
 func TestFailedToQueryAndOffset(t *testing.T) {
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=100", nil)
-
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=100", nil)
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)

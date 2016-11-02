@@ -28,7 +28,7 @@ type MockTX struct {
 	mock.Mock
 }
 
-func (m MockDB) Open() (db.TX, error) {
+func (m *MockDB) Open() (db.TX, error) {
 	args := m.Called()
 	tx := args.Get(0)
 	if tx == nil {
@@ -38,17 +38,17 @@ func (m MockDB) Open() (db.TX, error) {
 	return tx.(db.TX), args.Error(1)
 }
 
-func (m MockDB) Limit() int {
+func (m *MockDB) Limit() int {
 	args := m.Called()
 	return args.Int(0)
 }
 
-func (m MockTX) Ping() error {
+func (m *MockTX) Ping() error {
 	args := m.Called()
 	return args.Error(0)
 }
 
-func (m MockTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
+func (m *MockTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	args := m.Called(offset, since)
 	notifications := args.Get(0)
 	if notifications == nil {
@@ -58,10 +58,10 @@ func (m MockTX) ReadNotifications(offset int, since time.Time) (*[]model.Interna
 	return notifications.(*[]model.InternalNotification), args.Error(1)
 }
 
-func (m MockTX) WriteNotification(notification *model.InternalNotification) {
+func (m *MockTX) WriteNotification(notification *model.InternalNotification) {
 	m.Called(notification)
 }
 
-func (m MockTX) Close() {
+func (m *MockTX) Close() {
 	m.Called()
 }

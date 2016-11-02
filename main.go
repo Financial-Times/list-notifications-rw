@@ -1,10 +1,16 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
+	"github.com/Financial-Times/list-notifications-rw/resources"
+	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"github.com/urfave/cli"
 	"gopkg.in/urfave/cli.v1/altsrc"
 )
@@ -23,6 +29,11 @@ func main() {
 			Name:  "limit",
 			Usage: "The max number of results for a notifications query.",
 			Value: 200,
+		}),
+		altsrc.NewIntFlag(cli.IntFlag{
+			Name:  "port",
+			Usage: "The port number to run on.",
+			Value: 8080,
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:  "cache-max-age",
@@ -66,10 +77,31 @@ func main() {
 			MaxLimit:   ctx.Int("limit"),
 		}
 
-		server(mapper, nextLink, mongo)
+		server(ctx.Int("port"), mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
+}
+
+func server(port int, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+	r := mux.NewRouter()
+
+	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db))
+	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
+
+	r.HandleFunc("/__health", resources.Health(db))
+	r.HandleFunc("/__gtg", resources.GTG(db))
+
+	server := &http.Server{
+		Handler: r,
+		Addr:    ":" + strconv.Itoa(port),
+
+		WriteTimeout: 60 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	logrus.Info("Starting server on :8080")
+	server.ListenAndServe()
 }
 
 func version() string {

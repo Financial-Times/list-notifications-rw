@@ -60,7 +60,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		var results []model.PublicNotification
 		for i, n := range *notifications {
 			if i >= db.Limit() {
-				continue
+				break
 			}
 			results = append(results, mapper.MapInternalNotificationToPublic(n))
 		}
@@ -92,7 +92,7 @@ func getOffset(r *http.Request) (offset int, err error) {
 }
 
 func sinceMessage() string {
-	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=" + time.Now().UTC().Format(time.RFC3339Nano) + "."
+	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=" + time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339Nano) + "."
 }
 
 func writeMessage(status int, message string, w http.ResponseWriter) {

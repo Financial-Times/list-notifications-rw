@@ -11,7 +11,7 @@ func TestFilterSyntheticTransactions(t *testing.T) {
 		t.Fatal("Shouldn't reach here!")
 	}
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 	req.Header.Add(tidHeader, synthTidPrefix+"_a-fake-tid-which-should-be-rejected-if-all-goes-well")
 
 	w := httptest.NewRecorder()
@@ -27,7 +27,7 @@ func TestAllowsNormalTransactions(t *testing.T) {
 		passed = true
 	}
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 	req.Header.Add(tidHeader, "tid_123761283")
 
 	w := httptest.NewRecorder()
@@ -45,7 +45,7 @@ func TestAllowsNoTID(t *testing.T) {
 		passed = true
 	}
 
-	req := httptest.NewRequest("GET", "http://nothing/at/all", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)

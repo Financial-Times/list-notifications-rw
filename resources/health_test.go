@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestHealthy(t *testing.T) {
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(nil)
 
-	req := httptest.NewRequest("GET", "http://nothing/__health", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
 	Health(mockDb)(w, req)
@@ -56,7 +57,7 @@ func TestUnhealthy(t *testing.T) {
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(errors.New("we ain't looking too good"))
 
-	req := httptest.NewRequest("GET", "http://nothing/__health", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
 	Health(mockDb)(w, req)
@@ -95,7 +96,7 @@ func TestWorkingGTG(t *testing.T) {
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(nil)
 
-	req := httptest.NewRequest("GET", "http://nothing/at/__gtg", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
 	GTG(mockDb)(w, req)
@@ -114,7 +115,7 @@ func TestFailingGTG(t *testing.T) {
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(errors.New("omg we are not gtg"))
 
-	req := httptest.NewRequest("GET", "http://nothing/at/__gtg", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
 	GTG(mockDb)(w, req)
@@ -131,7 +132,7 @@ func TestFailingDBGTG(t *testing.T) {
 
 	mockDb.On("Open").Return(nil, errors.New("omg we are not gtg"))
 
-	req := httptest.NewRequest("GET", "http://nothing/at/__gtg", nil)
+	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
 	GTG(mockDb)(w, req)
