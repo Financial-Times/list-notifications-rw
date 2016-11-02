@@ -47,13 +47,8 @@ func TestReadNotifications(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 200 {
-		t.Fatal("Everything should be OK but we didn't return 200!")
-	}
-
-	if w.Header().Get("Content-Type") != "application/json" {
-		t.Fatal("Everything should be OK but we didn't return json!")
-	}
+	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
 
 	decoder := json.NewDecoder(w.Body)
 	page := model.PublicNotificationPage{}
@@ -76,6 +71,38 @@ func TestReadNotifications(t *testing.T) {
 	t.Log("Read request worked as expected.")
 }
 
+func TestReadNoNotifications(t *testing.T) {
+	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
+
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
+	w := httptest.NewRecorder()
+
+	mockDb := new(MockDB)
+	mockTx := new(MockTX)
+
+	mockDb.On("Open").Return(mockTx, nil)
+
+	mockNotifications := []model.InternalNotification{}
+
+	mockTx.On("Close").Return()
+	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
+
+	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+
+	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
+
+	decoder := json.NewDecoder(w.Body)
+	page := model.PublicNotificationPage{}
+	decoder.Decode(&page)
+
+	results := page.Notifications
+
+	assert.Len(t, results, 0)
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
+}
+
 func Test400NoSinceDate(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 	w := httptest.NewRecorder()
@@ -83,9 +110,7 @@ func Test400NoSinceDate(t *testing.T) {
 	mockDb := new(MockDB)
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 400 {
-		t.Fatal("No since date! Should be 400!")
-	}
+	assert.Equal(t, 400, w.Code, "No since date, should be 400!")
 
 	t.Log("Recorded 400 response as expected.")
 	mockDb.AssertNotCalled(t, "Open")
@@ -98,9 +123,7 @@ func Test400JunkSinceDate(t *testing.T) {
 	mockDb := new(MockDB)
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 400 {
-		t.Fatal("The since date was garbage! Should be 400!")
-	}
+	assert.Equal(t, 400, w.Code, "The since date was garbage! Should be 400!")
 
 	mockDb.AssertNotCalled(t, "Open")
 	t.Log("Recorded 400 response as expected.")
@@ -115,9 +138,7 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 500 {
-		t.Fatal("Mongo was broken but we didn't return 500!")
-	}
+	assert.Equal(t, 500, w.Code, "Mongo was broken but we didn't return 500!")
 
 	mockDb.AssertExpectations(t)
 	t.Log("Recorded 500 response as expected, and since date was accepted.")
@@ -131,9 +152,7 @@ func TestInvalidOffset(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 400 {
-		t.Fatal("Offset was invalid but we didn't 400!")
-	}
+	assert.Equal(t, 400, w.Code, "Offset was invalid but we didn't 400!")
 
 	mockDb.AssertNotCalled(t, "Open")
 	t.Log("Recorded 400 response as expected.")
@@ -154,9 +173,7 @@ func TestFailedToQueryAndOffset(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
 
-	if w.Code != 500 {
-		t.Fatal("Mongo failed to query but we didn't return 500!")
-	}
+	assert.Equal(t, 500, w.Code, "Mongo failed to query but we didn't return 500!")
 
 	mockDb.AssertExpectations(t)
 	mockTx.AssertExpectations(t)

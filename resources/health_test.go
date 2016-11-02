@@ -23,9 +23,7 @@ func TestHealthy(t *testing.T) {
 
 	Health(mockDb)(w, req)
 
-	if w.Code != 200 {
-		t.Fatal("Should return 200!")
-	}
+	assert.Equal(t, 200, w.Code)
 
 	health := fthealth.HealthResult{}
 	err := json.NewDecoder(w.Body).Decode(&health)
@@ -62,9 +60,7 @@ func TestUnhealthy(t *testing.T) {
 
 	Health(mockDb)(w, req)
 
-	if w.Code != 200 {
-		t.Fatal("Should always return 200!")
-	}
+	assert.Equal(t, 200, w.Code)
 
 	health := fthealth.HealthResult{}
 	err := json.NewDecoder(w.Body).Decode(&health)
@@ -101,11 +97,7 @@ func TestWorkingGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	if w.Code != 200 {
-		t.Fatal("Should return 200!")
-	}
-
-	t.Log("Return 200 as expected.")
+	assert.Equal(t, 200, w.Code)
 }
 
 func TestFailingGTG(t *testing.T) {
@@ -120,11 +112,7 @@ func TestFailingGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	if w.Code != 500 {
-		t.Fatal("Should return 500!")
-	}
-
-	t.Log("Return 500 as expected.")
+	assert.Equal(t, 500, w.Code)
 }
 
 func TestFailingDBGTG(t *testing.T) {
@@ -137,9 +125,5 @@ func TestFailingDBGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	if w.Code != 500 {
-		t.Fatal("Should return 500!")
-	}
-
-	t.Log("Return 500 as expected.")
+	assert.Equal(t, 500, w.Code)
 }

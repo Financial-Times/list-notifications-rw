@@ -32,6 +32,6 @@ type Link struct {
 // PublicNotificationPage represents one page in the result set
 type PublicNotificationPage struct {
 	RequestURL    string               `json:"requestUrl"`
-	Notifications []PublicNotification `json:"notifications,omitempty"`
+	Notifications []PublicNotification `json:"notifications"`
 	Links         []Link               `json:"links"`
 }
