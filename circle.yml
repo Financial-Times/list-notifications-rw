@@ -8,7 +8,6 @@ test:
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
     - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-    - go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/coveralls.out
+    - go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/coveralls.out ./...
   post:
-    - gocov-html ~/coverage.json > $CIRCLE_ARTIFACTS/coverage.html
     - goveralls -coverprofile=$CIRCLE_ARTIFACTS/coveralls.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
