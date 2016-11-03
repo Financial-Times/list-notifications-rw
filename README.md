@@ -7,22 +7,58 @@ Responsible for serving a writing notifications for lists. Similar in functional
 
 ```sh
 go get github.com/Financial-Times/list-notifications-rw
-cd $GOPATH/src/github.com/Financial-Times/list-notifications-rw
-go get -u -t -v ./...
 ```
 
 ## Build
 
-Due to the structure of the project, to build the binary into the root directory, run the following:
-
 ```sh
-go build ./bin/list-notification-rw
+go build
 ```
 
 ## Test
 
-Testing works as normal
-
 ```sh
 go test -v -race ./...
+```
+
+## Running Locally
+
+The `list-notifications-rw` requires a running MongoDB instance to connect to. Update the [config.yml](/config.yml) `db` field to point to your Mongo instance. To run, simply build and run:
+
+```
+./list-notifications-rw
+```
+
+**N.B.** This assumes your config.yml is in your working directory.
+
+The default port is `8080`, but can be configured in the [config.yml](/config.yml).
+
+## API
+
+Write a new list notification:
+
+```
+curl http://localhost:8080/lists/notifications/{uuid} -XPUT --data '$json'
+```
+
+Where `$json` is a valid internal list in json format. To get example list data, see [sample-list.json](/sample-list.json) or get an example from the MongoDB `lists` collection.
+
+Read notifications:
+
+```
+curl http://localhost:8080/lists/notifications?since=$date
+```
+
+Where `$date` is a date in RFC3339 format which is within the last 3 months. For an example date, simply hit the `/lists/notifications` endpoint with no since parameter.
+
+To see healthcheck results:
+
+```
+curl http://localhost:8080/__health
+```
+
+Is it good to go?
+
+```
+curl http://localhost:8080/__gtg
 ```
