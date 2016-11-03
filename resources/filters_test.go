@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFilterSyntheticTransactions(t *testing.T) {
@@ -17,6 +19,7 @@ func TestFilterSyntheticTransactions(t *testing.T) {
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)
 
+	assert.Equal(t, 200, w.Code)
 	t.Log("Request was filtered.")
 }
 
@@ -33,16 +36,15 @@ func TestAllowsNormalTransactions(t *testing.T) {
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)
 
+	assert.Equal(t, 200, w.Code)
 	if !passed {
 		t.Fatal("Failed to reach next handler!")
 	}
 }
 
 func TestAllowsNoTID(t *testing.T) {
-	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
-		t.Log("Request was forwarded on as expected.")
-		passed = true
+		t.Fatal("Shouldn't reach here!")
 	}
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
@@ -50,7 +52,5 @@ func TestAllowsNoTID(t *testing.T) {
 	w := httptest.NewRecorder()
 	FilterSyntheticTransactions(next)(w, req)
 
-	if !passed {
-		t.Fatal("Failed to reach next handler!")
-	}
+	assert.Equal(t, 400, w.Code)
 }

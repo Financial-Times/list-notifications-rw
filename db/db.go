@@ -7,8 +7,8 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-var maxLimit = 200
-var cacheDelay = 10
+var maxLimit int
+var cacheDelay int
 
 // Open opens a new session to Mongo
 func (db MongoDB) Open() (TX, error) {

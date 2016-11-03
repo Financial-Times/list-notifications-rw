@@ -37,7 +37,7 @@ func main() {
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:  "cache-max-age",
-			Usage: "The max age for content records in varnish.",
+			Usage: "The max age for content records in varnish in seconds.",
 			Value: 10,
 		}),
 		altsrc.NewStringFlag(cli.StringFlag{
@@ -92,20 +92,21 @@ func server(port int, mapper mapping.NotificationsMapper, nextLink mapping.NextL
 	r.HandleFunc("/__health", resources.Health(db))
 	r.HandleFunc("/__gtg", resources.GTG(db))
 
+	addr := ":" + strconv.Itoa(port)
 	server := &http.Server{
 		Handler: r,
-		Addr:    ":" + strconv.Itoa(port),
+		Addr:    addr,
 
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logrus.Info("Starting server on :8080")
+	logrus.Info("Starting server on " + addr)
 	server.ListenAndServe()
 }
 
 func version() string {
-	v := os.Getenv("app_version")
+	v := os.Getenv("app_version") // set in service file
 	if v == "" {
 		v = "v0.0.0"
 	}

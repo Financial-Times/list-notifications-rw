@@ -14,6 +14,11 @@ const tidHeader = "X-Request-Id"
 func FilterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
+		if tid == "" {
+			logrus.WithField("tid", tid).Infof("Rejecting notification; it has no transaction id.")
+			w.WriteHeader(400)
+			return
+		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
 			logrus.WithField("tid", tid).Infof("Rejecting notification; it has a synthetic transaction id.")

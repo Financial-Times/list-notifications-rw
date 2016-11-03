@@ -32,17 +32,14 @@ func (m DefaultMapper) MapRequestToInternalNotification(uuid string, decoder *js
 	}
 
 	if !isUUID.MatchString(notification.UUID) {
-		return nil, errors.New("List document contained an invalid UUID!")
+		return nil, errors.New("List contained an invalid UUID!")
 	}
 
 	if uuid != notification.UUID {
-		return nil, errors.New("List document contained a different UUID to the request URI!")
+		return nil, errors.New("List contained a different UUID to the request URI!")
 	}
 
-	if notification.EventType == "" {
-		notification.EventType = "UPDATE"
-	}
-
+	notification.EventType = "UPDATE"
 	return notification, nil
 }
 
