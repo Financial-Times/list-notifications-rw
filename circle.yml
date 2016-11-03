@@ -15,3 +15,4 @@ test:
     - cd $CIRCLE_ARTIFACTS && cat *.out >> overall-coverage.result
   post:
     - goveralls -coverprofile=$CIRCLE_ARTIFACTS/overall-coverage.result -service=circle-ci -repotoken=$COVERALLS_TOKEN
+    - bash <(curl -s https://codecov.io/bash)
