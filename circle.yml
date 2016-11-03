@@ -3,9 +3,12 @@ dependencies:
     - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
 
 test:
+  pre:
+    - go get github.com/mattn/goveralls
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
     - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-    - gocov test ./... > ~/coverage.json
+    - go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/coveralls.out
   post:
     - gocov-html ~/coverage.json > $CIRCLE_ARTIFACTS/coverage.html
+    - goveralls -coverprofile=$CIRCLE_ARTIFACTS/coveralls.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
