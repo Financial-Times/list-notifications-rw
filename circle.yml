@@ -9,6 +9,8 @@ test:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
     - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
     - go list ./... | awk -F/ '{print $4}' | xargs -I {} go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/{}.out ./{}
-    - cd $CIRCLE_ARTIFACTS && cat * >> overall-coverage.out
+    - cd $CIRCLE_ARTIFACTS && sed -i .update '1d' *.out
+    - echo "mode: atomic" > $CIRCLE_ARTIFACTS/overall-coverage.out
+    - cd $CIRCLE_ARTIFACTS && cat *.update >> overall-coverage.out
   post:
     - goveralls -coverprofile=$CIRCLE_ARTIFACTS/overall-coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
