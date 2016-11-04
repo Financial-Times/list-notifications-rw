@@ -32,7 +32,7 @@ func getHealthchecks(db db.DB) []fthealth.Check {
 			BusinessImpact:   "Notifications for list changes will not be available to API consumers (NextFT).",
 			TechnicalSummary: "The service is unable to connect to MongoDB. Notifications cannot be written to or read from the store.",
 			Severity:         1,
-			PanicGuide:       "todo: Write panic guide!",
+			PanicGuide:       "https://sites.google.com/a/ft.com/ft-technology-service-transition/home/run-book-library/list-notifications-rw-runbook",
 			Checker:          pingMongo(db),
 		},
 	}
