@@ -45,7 +45,7 @@ func TestReadNotifications(t *testing.T) {
 	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -87,7 +87,7 @@ func TestReadNoNotifications(t *testing.T) {
 	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -108,7 +108,7 @@ func Test400NoSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "No since date, should be 400!")
 
@@ -121,12 +121,25 @@ func Test400JunkSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "The since date was garbage! Should be 400!")
 
 	mockDb.AssertNotCalled(t, "Open")
 	t.Log("Recorded 400 response as expected.")
+}
+
+func Test400SinceDateTooEarly(t *testing.T) {
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
+	w := httptest.NewRecorder()
+
+	mockDb := new(MockDB)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 3)(w, req)
+
+	assert.Equal(t, 400, w.Code, "Sice date too early, should be 400!")
+
+	t.Log("Recorded 400 response as expected.")
+	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestFailedDatabaseOnRead(t *testing.T) {
@@ -136,7 +149,7 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 	mockDb := new(MockDB)
 	mockDb.On("Open").Return(nil, errors.New("I broke soz"))
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo was broken but we didn't return 500!")
 
@@ -150,7 +163,7 @@ func TestInvalidOffset(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "Offset was invalid but we didn't 400!")
 
@@ -171,7 +184,7 @@ func TestFailedToQueryAndOffset(t *testing.T) {
 	mockTx.On("ReadNotifications", 100, mockSince).Return(nil, errors.New("I broke again soz"))
 	mockDb.On("Open").Return(mockTx, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 1000)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo failed to query but we didn't return 500!")
 

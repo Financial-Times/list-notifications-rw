@@ -40,10 +40,15 @@ func main() {
 			Usage: "The max age for content records in varnish in seconds.",
 			Value: 10,
 		}),
+		altsrc.NewIntFlag(cli.IntFlag{
+			Name:  "max-since-interval",
+			Usage: "The maximum time interval clients are allowed to query for notifications in months.",
+			Value: 3,
+		}),
 		altsrc.NewStringFlag(cli.StringFlag{
 			Name:  "api-host",
 			Usage: "Api host to use for read responses.",
-			Value: "test.api.ft.com",
+			Value: "api.ft.com",
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:  "db-connect-timeout",
@@ -77,16 +82,16 @@ func main() {
 			MaxLimit:   ctx.Int("limit"),
 		}
 
-		server(ctx.Int("port"), mapper, nextLink, mongo)
+		server(ctx.Int("port"), ctx.Int("max-since-interval"),  mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
 }
 
-func server(port int, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func server(port int, maxSinceInterval int, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db))
+	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
 	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
