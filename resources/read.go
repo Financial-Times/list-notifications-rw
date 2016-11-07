@@ -97,7 +97,7 @@ func getOffset(r *http.Request) (offset int, err error) {
 }
 
 func sinceMessage() string {
-	return fmt.Sprintf("A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since= %s .", time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339Nano))
+	return fmt.Sprintf("A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=%s .", time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339Nano))
 }
 
 func writeMessage(status int, message string, w http.ResponseWriter) {

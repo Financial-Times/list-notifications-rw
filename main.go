@@ -52,8 +52,8 @@ func main() {
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:  "db-connect-timeout",
-			Usage: "Timeout in seconds for the initial database connection.",
-			Value: 60,
+			Usage: "Timeout in milliseconds for the initial database connection.",
+			Value: 3800,
 		}),
 		cli.StringFlag{
 			Name:  "config",

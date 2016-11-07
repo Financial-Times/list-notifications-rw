@@ -13,7 +13,7 @@ var cacheDelay int
 // Open opens a new session to Mongo
 func (db MongoDB) Open() (TX, error) {
 	if db.session == nil {
-		session, err := mgo.DialWithTimeout(db.Urls, time.Duration(db.Timeout)*time.Second)
+		session, err := mgo.DialWithTimeout(db.Urls, time.Duration(db.Timeout)*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
