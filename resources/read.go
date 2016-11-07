@@ -2,14 +2,14 @@ package resources
 
 import (
 	"encoding/json"
-	"net/http"
-	"strconv"
-	"time"
-
+	"fmt"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/Sirupsen/logrus"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 type msg struct {
@@ -17,26 +17,31 @@ type msg struct {
 }
 
 // ReadNotifications reads notifications from the backing db
-func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) func(w http.ResponseWriter, r *http.Request) {
+func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB, maxSinceInterval int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {
-			logrus.Warn("User didn't provide since date.")
+			logrus.Info("User didn't provide since date.")
 			writeMessage(400, sinceMessage(), w)
 			return
 		}
 
 		since, err := time.Parse(time.RFC3339Nano, param)
 		if err != nil {
-			logrus.WithError(err).WithField("since", param).Warn("Failed to parse user provided since date.")
+			logrus.WithError(err).WithField("since", param).Info("Failed to parse user provided since date.")
 			writeMessage(400, sinceMessage(), w)
+			return
+		}
+		if since.Before(time.Now().UTC().AddDate(0, 0, -maxSinceInterval)) {
+			logrus.Infof("User provided since date before query cap date, since= [%v].", since.Format(time.RFC3339Nano))
+			writeMessage(400, fmt.Sprintf("Since date must be within the last %d days.", maxSinceInterval), w)
 			return
 		}
 
 		offset, err := getOffset(r)
 
 		if err != nil {
-			logrus.WithError(err).Error("User provided offset is not an integer!")
+			logrus.WithError(err).Info("User provided offset is not an integer!")
 			writeMessage(400, "Please specify an integer offset.", w)
 			return
 		}
@@ -44,7 +49,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		tx, err := db.Open()
 		if err != nil {
 			logrus.WithError(err).Error("Failed to connect to mongo")
-			w.WriteHeader(500)
+			writeMessage(500, "Failed to retrieve list notifications due to internal server error", w)
 			return
 		}
 
@@ -53,7 +58,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		notifications, err := tx.ReadNotifications(offset, since)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to query mongo for notifications!")
-			w.WriteHeader(500)
+			writeMessage(500, "Failed to retrieve list notifications due to internal server error", w)
 			return
 		}
 
@@ -92,7 +97,7 @@ func getOffset(r *http.Request) (offset int, err error) {
 }
 
 func sinceMessage() string {
-	return "A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=" + time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339Nano) + "."
+	return fmt.Sprintf("A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since=%s .", time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339Nano))
 }
 
 func writeMessage(status int, message string, w http.ResponseWriter) {

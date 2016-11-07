@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -45,7 +46,7 @@ func TestReadNotifications(t *testing.T) {
 	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -87,7 +88,7 @@ func TestReadNoNotifications(t *testing.T) {
 	mockTx.On("Close").Return()
 	mockTx.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -108,9 +109,10 @@ func Test400NoSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "No since date, should be 400!")
+	assert.True(t, strings.Contains(w.Body.String(), "{\"message\":\"A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="), "Did not receive expected error message for missing since date")
 
 	t.Log("Recorded 400 response as expected.")
 	mockDb.AssertNotCalled(t, "Open")
@@ -121,12 +123,27 @@ func Test400JunkSinceDate(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockDb := new(MockDB)
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "The since date was garbage! Should be 400!")
+	assert.True(t, strings.Contains(w.Body.String(), "{\"message\":\"A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="), "Did not receive expected error message junk since date")
 
 	mockDb.AssertNotCalled(t, "Open")
 	t.Log("Recorded 400 response as expected.")
+}
+
+func Test400SinceDateTooEarly(t *testing.T) {
+	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
+	w := httptest.NewRecorder()
+
+	mockDb := new(MockDB)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 90)(w, req)
+
+	assert.Equal(t, 400, w.Code, "Since date too early, should be 400!")
+	assert.Equal(t, "{\"message\":\"Since date must be within the last 90 days.\"}\n", w.Body.String(), "Did not receive correct error message for since date before max time interval")
+
+	t.Log("Recorded 400 response as expected.")
+	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestFailedDatabaseOnRead(t *testing.T) {
@@ -136,9 +153,10 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 	mockDb := new(MockDB)
 	mockDb.On("Open").Return(nil, errors.New("I broke soz"))
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo was broken but we didn't return 500!")
+	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")
 
 	mockDb.AssertExpectations(t)
 	t.Log("Recorded 500 response as expected, and since date was accepted.")
@@ -150,9 +168,10 @@ func TestInvalidOffset(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 400, w.Code, "Offset was invalid but we didn't 400!")
+	assert.Equal(t, "{\"message\":\"Please specify an integer offset.\"}\n", w.Body.String(), "Did not receive expected  error message for invalid offset")
 
 	mockDb.AssertNotCalled(t, "Open")
 	t.Log("Recorded 400 response as expected.")
@@ -171,9 +190,10 @@ func TestFailedToQueryAndOffset(t *testing.T) {
 	mockTx.On("ReadNotifications", 100, mockSince).Return(nil, errors.New("I broke again soz"))
 	mockDb.On("Open").Return(mockTx, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockDb)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockDb, 10000)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo failed to query but we didn't return 500!")
+	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")
 
 	mockDb.AssertExpectations(t)
 	mockTx.AssertExpectations(t)
