@@ -1,6 +1,6 @@
 FROM alpine:3.4
 
-ADD . /source/
+COPY . /source/
 
 RUN apk add --update bash \
   && ls -lta /source/ \
@@ -11,7 +11,8 @@ RUN apk add --update bash \
   && cp -r /source/* $GOPATH/src/${REPO_PATH} \
   && cd $GOPATH/src/${REPO_PATH} \
   && go get ./... \
-  && go install ${REPO_PATH}/bin/list-notifications-rw \
+  && go install \
+  && touch /config.yml \
   && mv ${GOPATH}/bin/list-notifications-rw / \
   && apk del go git \
   && rm -rf $GOPATH /var/cache/apk/*
