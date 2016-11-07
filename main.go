@@ -42,8 +42,8 @@ func main() {
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:  "max-since-interval",
-			Usage: "The maximum time interval clients are allowed to query for notifications in months.",
-			Value: 3,
+			Usage: "The maximum time interval clients are allowed to query for notifications in days.",
+			Value: 90,
 		}),
 		altsrc.NewStringFlag(cli.StringFlag{
 			Name:  "api-host",
@@ -82,7 +82,7 @@ func main() {
 			MaxLimit:   ctx.Int("limit"),
 		}
 
-		server(ctx.Int("port"), ctx.Int("max-since-interval"),  mapper, nextLink, mongo)
+		server(ctx.Int("port"), ctx.Int("max-since-interval"), mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
