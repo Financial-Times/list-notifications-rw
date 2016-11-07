@@ -30,7 +30,7 @@ func main() {
 			Name:   "limit",
 			Usage:  "The max number of results for a notifications query.",
 			Value:  200,
-			EnvVar: "NOTIFICATINS_LIMIT",
+			EnvVar: "NOTIFICATIONS_LIMIT",
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:   "port",
@@ -54,7 +54,7 @@ func main() {
 			Name:   "api-host",
 			Usage:  "Api host to use for read responses.",
 			Value:  "api.ft.com",
-			EnvVar: " ENV_API_HOST",
+			EnvVar: "API_HOST",
 		}),
 		altsrc.NewIntFlag(cli.IntFlag{
 			Name:   "db-connect-timeout",
