@@ -17,6 +17,7 @@ func TestHealthy(t *testing.T) {
 
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(nil)
+	mockTx.On("Close")
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
@@ -46,6 +47,9 @@ func TestHealthy(t *testing.T) {
 	assert.NotEmpty(t, check.TechnicalSummary, "Should have a non-empty technical summary")
 
 	assert.True(t, check.Ok, "Expect it's ok")
+
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestUnhealthy(t *testing.T) {
@@ -54,6 +58,7 @@ func TestUnhealthy(t *testing.T) {
 
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(errors.New("we ain't looking too good"))
+	mockTx.On("Close")
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
@@ -83,6 +88,9 @@ func TestUnhealthy(t *testing.T) {
 	assert.NotEmpty(t, check.TechnicalSummary, "Should have a non-empty technical summary")
 
 	assert.False(t, check.Ok, "Expect it's not ok")
+
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestWorkingGTG(t *testing.T) {
@@ -91,6 +99,7 @@ func TestWorkingGTG(t *testing.T) {
 
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(nil)
+	mockTx.On("Close")
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
@@ -98,6 +107,8 @@ func TestWorkingGTG(t *testing.T) {
 	GTG(mockDb)(w, req)
 
 	assert.Equal(t, 200, w.Code)
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestFailingGTG(t *testing.T) {
@@ -106,6 +117,7 @@ func TestFailingGTG(t *testing.T) {
 
 	mockDb.On("Open").Return(mockTx, nil)
 	mockTx.On("Ping").Return(errors.New("omg we are not gtg"))
+	mockTx.On("Close")
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
@@ -113,6 +125,8 @@ func TestFailingGTG(t *testing.T) {
 	GTG(mockDb)(w, req)
 
 	assert.Equal(t, 500, w.Code)
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
 }
 
 func TestFailingDBGTG(t *testing.T) {
@@ -126,4 +140,5 @@ func TestFailingDBGTG(t *testing.T) {
 	GTG(mockDb)(w, req)
 
 	assert.Equal(t, 500, w.Code)
+	mockDb.AssertExpectations(t)
 }

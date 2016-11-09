@@ -41,10 +41,11 @@ func getHealthchecks(db db.DB) []fthealth.Check {
 func pingMongo(db db.DB) func() (string, error) {
 	return func() (string, error) {
 		tx, err := db.Open()
-		defer tx.Close()
 		if err != nil {
 			return "", err
 		}
+
+		defer tx.Close()
 
 		return "", tx.Ping()
 	}
