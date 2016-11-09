@@ -9,6 +9,7 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/resources"
+	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/urfave/cli"
@@ -102,7 +103,13 @@ func server(port int, maxSinceInterval int, mapper mapping.NotificationsMapper, 
 	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
-	r.HandleFunc("/__gtg", resources.GTG(db))
+	r.HandleFunc(status.GTGPath, resources.GTG(db))
+
+	r.HandleFunc(status.PingPath, status.PingHandler)
+	r.HandleFunc(status.PingPathDW, status.PingHandler)
+
+	r.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
+	r.HandleFunc(status.BuildInfoPathDW, status.BuildInfoHandler)
 
 	addr := ":" + strconv.Itoa(port)
 	server := &http.Server{
