@@ -55,6 +55,8 @@ func TestReadNotifications(t *testing.T) {
 	page := model.PublicNotificationPage{}
 	decoder.Decode(&page)
 
+	assert.Equal(t, "http://testing-123.com/at/all?since=2006-01-02T15:04:05.99999Z", page.RequestURL)
+
 	results := page.Notifications
 
 	// TODO: Mock the mapper?

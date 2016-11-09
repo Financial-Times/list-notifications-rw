@@ -37,6 +37,14 @@ func TestNextLink(t *testing.T) {
 	assert.Equal(t, nextLink.generateLink(calculated, offset).Href, link.Href, "Should match generated link.")
 }
 
+func TestRequestURL(t *testing.T) {
+	uri := &url.URL{}
+	result := nextLink.ProcessRequestLink(uri)
+
+	assert.Equal(t, "http", result.Scheme)
+	assert.Equal(t, "go-tests.ft.com", result.Host)
+}
+
 func TestGenerateLinkWithOffset(t *testing.T) {
 	now := time.Now().UTC()
 
