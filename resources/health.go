@@ -45,6 +45,8 @@ func pingMongo(db db.DB) func() (string, error) {
 			return "", err
 		}
 
+		defer tx.Close()
+
 		return "", tx.Ping()
 	}
 }
