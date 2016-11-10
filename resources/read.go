@@ -3,13 +3,14 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/Sirupsen/logrus"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type msg struct {
@@ -75,7 +76,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 				nextLink.NextLink(since, offset, *notifications),
 			},
 			Notifications: results,
-			RequestURL:    r.URL.String(),
+			RequestURL:    nextLink.ProcessRequestLink(r.URL).String(),
 		}
 
 		w.Header().Add("Content-Type", "application/json")

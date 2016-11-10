@@ -12,6 +12,7 @@ import (
 // NextLinkGenerator returns the link to the next result set in a paginated response.
 type NextLinkGenerator interface {
 	NextLink(since time.Time, offset int, notifications []model.InternalNotification) model.Link
+	ProcessRequestLink(uri *url.URL) *url.URL
 }
 
 // OffsetNextLink is the default implementation for NextLinkGenerator
@@ -27,6 +28,12 @@ func (o OffsetNextLink) NextLink(since time.Time, offset int, notifications []mo
 	updatedOffset := o.calculateOffset(notifications, offset)
 
 	return o.generateLink(updatedSince, updatedOffset)
+}
+
+func (o OffsetNextLink) ProcessRequestLink(uri *url.URL) *url.URL {
+	uri.Scheme = "http"
+	uri.Host = o.ApiHost
+	return uri
 }
 
 func (o OffsetNextLink) generateLink(since time.Time, offset int) model.Link {
