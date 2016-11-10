@@ -28,7 +28,7 @@ func (db *MongoDB) Open() (TX, error) {
 		cacheDelay = db.CacheDelay
 
 		if connections > expectedConnections {
-			log.Println("WARNING: There are more MongoDB connections opened than expected! Are you sure this is what you want?")
+			log.Printf("WARNING: There are more MongoDB connections opened than expected! Are you sure this is what you want? Open connections: %v, expected %v.", connections, expectedConnections)
 		}
 	}
 
