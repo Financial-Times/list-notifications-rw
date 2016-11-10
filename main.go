@@ -102,7 +102,7 @@ func server(port int, maxSinceInterval int, mapper mapping.NotificationsMapper, 
 	r := mux.NewRouter()
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
-	r.HandleFunc("/lists/notifications/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
+	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
