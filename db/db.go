@@ -1,6 +1,7 @@
 package db
 
 import (
+	"log"
 	"time"
 
 	"github.com/Financial-Times/list-notifications-rw/model"
@@ -10,45 +11,58 @@ import (
 var maxLimit int
 var cacheDelay int
 
+var expectedConnections = 1
+var connections int
+
 // Open opens a new session to Mongo
-func (db MongoDB) Open() (TX, error) {
+func (db *MongoDB) Open() (TX, error) {
 	if db.session == nil {
 		session, err := mgo.DialWithTimeout(db.Urls, time.Duration(db.Timeout)*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
 		db.session = session
+		connections++
 
 		maxLimit = db.MaxLimit
 		cacheDelay = db.CacheDelay
+
+		if connections > expectedConnections {
+			log.Printf("WARNING: There are more MongoDB connections opened than expected! Are you sure this is what you want? Open connections: %v, expected %v.", connections, expectedConnections)
+		}
 	}
 
 	return &MongoTX{db.session.Copy()}, nil
 }
 
+// Close closes the entire database connection
+func (db *MongoDB) Close() {
+	db.session.Close()
+}
+
 // Limit returns the max number of records to return
-func (db MongoDB) Limit() int {
+func (db *MongoDB) Limit() int {
 	return db.MaxLimit
 }
 
 // Ping returns a mongo ping response
-func (tx MongoTX) Ping() error {
+func (tx *MongoTX) Ping() error {
 	return tx.session.Ping()
 }
 
 // Close closes the transaction
-func (tx MongoTX) Close() {
+func (tx *MongoTX) Close() {
 	tx.session.Close()
 }
 
 // WriteNotification inserts a notification into mongo
-func (tx MongoTX) WriteNotification(notification *model.InternalNotification) {
+func (tx *MongoTX) WriteNotification(notification *model.InternalNotification) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
 	collection.Insert(notification)
 }
 
 // ReadNotifications reads notifications from the collection.
-func (tx MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
+func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
 
 	query := generateQuery(offset, since)
@@ -68,6 +82,7 @@ func (tx MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inter
 // DB contains database functions
 type DB interface {
 	Open() (TX, error)
+	Close()
 	Limit() int // bit hacky, but limit is exposed to resources here
 }
 

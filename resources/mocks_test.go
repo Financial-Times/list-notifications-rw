@@ -38,6 +38,10 @@ func (m *MockDB) Open() (db.TX, error) {
 	return tx.(db.TX), args.Error(1)
 }
 
+func (m *MockDB) Close() {
+	m.Called()
+}
+
 func (m *MockDB) Limit() int {
 	args := m.Called()
 	return args.Int(0)

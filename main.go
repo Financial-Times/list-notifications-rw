@@ -75,12 +75,14 @@ func main() {
 	app.Flags = flags
 
 	app.Action = func(ctx *cli.Context) {
-		mongo := db.MongoDB{
+		mongo := &db.MongoDB{
 			Urls:       ctx.String("db"),
 			Timeout:    ctx.Int("db-connect-timeout"),
 			MaxLimit:   ctx.Int("limit"),
 			CacheDelay: ctx.Int("cache-max-age"),
 		}
+
+		defer mongo.Close()
 
 		mapper := mapping.DefaultMapper{ApiHost: ctx.String("api-host")}
 
