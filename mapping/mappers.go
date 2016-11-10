@@ -28,7 +28,7 @@ func (m DefaultMapper) MapRequestToInternalNotification(uuid string, decoder *js
 
 	err := decoder.Decode(notification)
 	if err != nil {
-		return nil, errors.New("Failed to parse json for list body!")
+		return nil, err
 	}
 
 	if !isUUID.MatchString(notification.UUID) {

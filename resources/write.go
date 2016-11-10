@@ -22,7 +22,6 @@ func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http
 				WithField("uuid", uuid).
 				WithField("tid", r.Header.Get("X-Request-Id")).
 				Error("Invalid request! See error for details.")
-
 			writeError("Invalid Request body.", 400, w)
 			return
 		}
@@ -38,6 +37,7 @@ func WriteNotification(mapper mapping.NotificationsMapper, db db.DB) func(w http
 
 		tx.WriteNotification(notification)
 
+		logrus.WithField("uuid", uuid).WithField("tid", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
 		w.WriteHeader(200)
 	}
 }
