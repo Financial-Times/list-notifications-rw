@@ -28,7 +28,7 @@ func TestWriteNotification(t *testing.T) {
 	mockTx.On("Close").Return()
 	mockTx.On("WriteNotification", expectedNotification).Return()
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -42,7 +42,7 @@ func TestNotJson(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -55,7 +55,7 @@ func TestNoUUID(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -68,7 +68,7 @@ func TestInvalidUUID(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -81,7 +81,7 @@ func TestUUIDDoesNotMatch(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -94,7 +94,7 @@ func TestInvalidUUIDInPath(t *testing.T) {
 
 	mockDb := new(MockDB)
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -108,7 +108,7 @@ func TestFailedDatabaseOnWrite(t *testing.T) {
 	mockDb := new(MockDB)
 	mockDb.On("Open").Return(nil, errors.New("No writes for u"))
 
-	r := WriteRoute(WriteNotification(testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 500, w.Code)
