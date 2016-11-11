@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"compress/gzip"
 	"net/http"
 	"strings"
 
@@ -26,6 +27,22 @@ func FilterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		next(w, r)
+	}
+}
+
+// UnzipGzip pre-processes the request body if it's gzipped.
+func UnzipGzip(next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			unzipped, err := gzip.NewReader(r.Body)
+			if err != nil {
+				writeError(err.Error(), http.StatusBadRequest, w)
+				return
+			}
+
+			r.Body = unzipped
+		}
 		next(w, r)
 	}
 }

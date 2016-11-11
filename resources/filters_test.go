@@ -1,8 +1,11 @@
 package resources
 
 import (
+	"bytes"
+	"compress/gzip"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,4 +56,41 @@ func TestAllowsNoTID(t *testing.T) {
 	FilterSyntheticTransactions(next)(w, req)
 
 	assert.Equal(t, 400, w.Code)
+}
+
+func TestFailUnzip(t *testing.T) {
+	next := func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("Shouldn't reach here!")
+	}
+
+	req, _ := http.NewRequest("PUT", "http://nothing/at/all", strings.NewReader("gibberish"))
+	req.Header.Add("Content-Encoding", "gzip")
+
+	w := httptest.NewRecorder()
+	UnzipGzip(next)(w, req)
+
+	assert.Equal(t, 400, w.Code)
+}
+
+func TestUnzipOk(t *testing.T) {
+	passed := false
+	next := func(w http.ResponseWriter, r *http.Request) {
+		t.Log("Request was forwarded on as expected.")
+		passed = true
+	}
+
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	gz.Write([]byte("not gibberish"))
+
+	req, _ := http.NewRequest("PUT", "http://nothing/at/all", bytes.NewReader(b.Bytes()))
+	req.Header.Add("Content-Encoding", "gzip")
+
+	w := httptest.NewRecorder()
+	UnzipGzip(next)(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	if !passed {
+		t.Fatal("Failed to reach next handler!")
+	}
 }

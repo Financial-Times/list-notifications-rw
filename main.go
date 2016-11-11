@@ -107,7 +107,9 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 	r := mux.NewRouter()
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
-	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(dumpRequests, mapper, db))).Methods("PUT")
+
+	gunzipped := resources.UnzipGzip(resources.WriteNotification(dumpRequests, mapper, db))
+	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(gunzipped)).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
