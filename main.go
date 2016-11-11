@@ -63,6 +63,11 @@ func main() {
 			Value:  3800,
 			EnvVar: "DB_CONNECTION_TIMEOUT",
 		}),
+		altsrc.NewBoolFlag(cli.BoolFlag{
+			Name:   "dump-requests",
+			Usage:  "Logs every write request in full HTTP/1.1 spec.",
+			EnvVar: "DUMP_REQUESTS",
+		}),
 		cli.StringFlag{
 			Name:  "config",
 			Value: "./config.yml",
@@ -92,17 +97,17 @@ func main() {
 			MaxLimit:   ctx.Int("limit"),
 		}
 
-		server(ctx.Int("port"), ctx.Int("max-since-interval"), mapper, nextLink, mongo)
+		server(ctx.Int("port"), ctx.Int("max-since-interval"), ctx.Bool("dump-requests"), mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
 }
 
-func server(port int, maxSinceInterval int, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
-	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(mapper, db))).Methods("PUT")
+	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(resources.WriteNotification(dumpRequests, mapper, db))).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
 	r.HandleFunc(status.GTGPath, resources.GTG(db))

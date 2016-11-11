@@ -16,13 +16,13 @@ func FilterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {
 			logrus.WithField("tid", tid).Infof("Rejecting notification; it has no transaction id.")
-			w.WriteHeader(400)
+			writeError("Rejecting notification; it has no transaction id.", 400, w)
 			return
 		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
 			logrus.WithField("tid", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
-			w.WriteHeader(200)
+			writeError("Rejecting notification; it has a synthetic transaction id.", 200, w)
 			return
 		}
 
