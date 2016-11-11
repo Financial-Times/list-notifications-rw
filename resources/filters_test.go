@@ -20,7 +20,7 @@ func TestFilterSyntheticTransactions(t *testing.T) {
 	req.Header.Add(tidHeader, synthTidPrefix+"_a-fake-tid-which-should-be-rejected-if-all-goes-well")
 
 	w := httptest.NewRecorder()
-	FilterSyntheticTransactions(next)(w, req)
+	Filter(next).FilterSyntheticTransactions().Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Log("Request was filtered.")
@@ -37,12 +37,10 @@ func TestAllowsNormalTransactions(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283")
 
 	w := httptest.NewRecorder()
-	FilterSyntheticTransactions(next)(w, req)
+	Filter(next).FilterSyntheticTransactions().Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	if !passed {
-		t.Fatal("Failed to reach next handler!")
-	}
+	assert.True(t, passed)
 }
 
 func TestAllowsNoTID(t *testing.T) {
@@ -53,7 +51,7 @@ func TestAllowsNoTID(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 
 	w := httptest.NewRecorder()
-	FilterSyntheticTransactions(next)(w, req)
+	Filter(next).FilterSyntheticTransactions().Build()(w, req)
 
 	assert.Equal(t, 400, w.Code)
 }
@@ -67,7 +65,7 @@ func TestFailUnzip(t *testing.T) {
 	req.Header.Add("Content-Encoding", "gzip")
 
 	w := httptest.NewRecorder()
-	UnzipGzip(next)(w, req)
+	Filter(next).Gunzip().Build()(w, req)
 
 	assert.Equal(t, 400, w.Code)
 }
@@ -87,10 +85,8 @@ func TestUnzipOk(t *testing.T) {
 	req.Header.Add("Content-Encoding", "gzip")
 
 	w := httptest.NewRecorder()
-	UnzipGzip(next)(w, req)
+	Filter(next).Gunzip().Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	if !passed {
-		t.Fatal("Failed to reach next handler!")
-	}
+	assert.True(t, passed)
 }

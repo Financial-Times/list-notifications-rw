@@ -108,8 +108,8 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
 
-	gunzipped := resources.UnzipGzip(resources.WriteNotification(dumpRequests, mapper, db))
-	r.HandleFunc("/lists/{uuid}", resources.FilterSyntheticTransactions(gunzipped)).Methods("PUT")
+	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().Gunzip().Build()
+	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
