@@ -44,6 +44,7 @@ func generateQuery(offset int, since time.Time) []bson.M {
 		{
 			"$sort": bson.M{
 				"lastModified": 1,
+				"uuid":         1,
 			},
 		},
 		{"$skip": offset},

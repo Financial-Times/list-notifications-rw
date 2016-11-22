@@ -56,7 +56,7 @@ func TestQuery(t *testing.T) {
 
 	query := generateQuery(50, since)
 
-	regex := regexp.MustCompile(`\[\{"\$match":\{"lastModified":\{"\$gte":\{"\$date":".*"},"\$lte":\{"\$date":".*"}}}},\{"\$sort":\{"lastModified":-1}},\{"\$group":\{"_id":"\$uuid","eventType":\{"\$first":"\$eventType"},"lastModified":\{"\$first":"\$lastModified"},"publishReference":\{"\$first":"\$publishReference"},"title":\{"\$first":"\$title"},"uuid":\{"\$first":"\$uuid"}}},\{"\$sort":\{"lastModified":1}},\{"\$skip":50},\{"\$limit":103}]`)
+	regex := regexp.MustCompile(`\[\{"\$match":\{"lastModified":\{"\$gte":\{"\$date":".*"},"\$lte":\{"\$date":".*"}}}},\{"\$sort":\{"lastModified":-1}},\{"\$group":\{"_id":"\$uuid","eventType":\{"\$first":"\$eventType"},"lastModified":\{"\$first":"\$lastModified"},"publishReference":\{"\$first":"\$publishReference"},"title":\{"\$first":"\$title"},"uuid":\{"\$first":"\$uuid"}}},\{"\$sort":\{"lastModified":1,"uuid":1}},\{"\$skip":50},\{"\$limit":103}]`)
 	data, _ := bson.MarshalJSON(query)
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }
