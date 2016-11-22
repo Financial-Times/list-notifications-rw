@@ -79,7 +79,8 @@ func main() {
 	app.Before = altsrc.InitInputSourceWithContext(flags, altsrc.NewYamlSourceFromFlagFunc("config"))
 	app.Flags = flags
 
-	app.Action = func(ctx *cli.Context) {
+	app.Action = func(ctx *cli.Context) error {
+		logrus.Info("Initialising MongoDB.")
 		mongo := &db.MongoDB{
 			Urls:       ctx.String("db"),
 			Timeout:    ctx.Int("db-connect-timeout"),
@@ -88,6 +89,21 @@ func main() {
 		}
 
 		defer mongo.Close()
+
+		logrus.Info("Opening initial connection to Mongo.")
+		tx, err := mongo.Open()
+		if err != nil {
+			return err
+		}
+
+		logrus.Info("Ensuring Mongo indices are setup...")
+		err = tx.EnsureIndices()
+		if err != nil {
+			return err
+		}
+
+		logrus.Info("Finished ensuring indices.")
+		tx.Close()
 
 		mapper := mapping.DefaultMapper{ApiHost: ctx.String("api-host")}
 
@@ -98,6 +114,7 @@ func main() {
 		}
 
 		server(ctx.Int("port"), ctx.Int("max-since-interval"), ctx.Bool("dump-requests"), mapper, nextLink, mongo)
+		return nil
 	}
 
 	app.Run(os.Args)
