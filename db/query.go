@@ -12,41 +12,39 @@ import (
 func generateQuery(offset int, since time.Time) []bson.M {
 	match := getMatch(offset, since)
 
-	group := bson.M{
-		"$group": bson.M{
-			"_id": "$uuid",
-			"uuid": bson.M{
-				"$first": "$uuid",
-			},
-			"title": bson.M{
-				"$first": "$title",
-			},
-			"eventType": bson.M{
-				"$first": "$eventType",
-			},
-			"publishReference": bson.M{
-				"$first": "$publishReference",
-			},
-			"lastModified": bson.M{
-				"$first": "$lastModified",
-			},
-		},
-	}
-
 	pipeline := []bson.M{
-		match,
+		match, // get all records that exist between the start and end dates
 		{
 			"$sort": bson.M{
 				"lastModified": -1,
 			},
-		},
-		group,
+		}, // sort most recent notifications first
+		{
+			"$group": bson.M{
+				"_id": "$uuid", // group all notifications together by uuid...
+				"uuid": bson.M{
+					"$first": "$uuid",
+				},
+				"title": bson.M{
+					"$first": "$title",
+				},
+				"eventType": bson.M{
+					"$first": "$eventType",
+				},
+				"publishReference": bson.M{
+					"$first": "$publishReference",
+				},
+				"lastModified": bson.M{
+					"$first": "$lastModified",
+				},
+			},
+		}, //... and create one notification based on the most recent fields (the "first" notification's fields)
 		{
 			"$sort": bson.M{
 				"lastModified": 1,
 				"uuid":         1,
 			},
-		},
+		}, // sort by oldest first, and to ensure strict ordering, also sort by uuid when lastModified dates match
 		{"$skip": offset},
 		{"$limit": maxLimit + 1},
 	}
