@@ -112,6 +112,9 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))
+
+	r.HandleFunc("/__log/{level}", resources.UpdateLogLevel())
+
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
 
 	r.HandleFunc(status.PingPath, status.PingHandler)

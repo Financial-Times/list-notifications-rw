@@ -1,7 +1,10 @@
 package db
 
 import (
+	"encoding/json"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -11,12 +14,7 @@ func generateQuery(offset int, since time.Time) []bson.M {
 
 	group := bson.M{
 		"$group": bson.M{
-			"_id": bson.M{
-				"uuid": "$uuid",
-			},
-			"lastModified": bson.M{
-				"$max": "$lastModified",
-			},
+			"_id": "$uuid",
 			"uuid": bson.M{
 				"$first": "$uuid",
 			},
@@ -29,6 +27,9 @@ func generateQuery(offset int, since time.Time) []bson.M {
 			"publishReference": bson.M{
 				"$first": "$publishReference",
 			},
+			"lastModified": bson.M{
+				"$first": "$lastModified",
+			},
 		},
 	}
 
@@ -37,18 +38,21 @@ func generateQuery(offset int, since time.Time) []bson.M {
 		{
 			"$sort": bson.M{
 				"lastModified": -1,
-				"uuid":         1,
 			},
 		},
 		group,
 		{
 			"$sort": bson.M{
 				"lastModified": 1,
-				"_id":          1,
 			},
 		},
 		{"$skip": offset},
 		{"$limit": maxLimit + 1},
+	}
+
+	j, err := json.Marshal(pipeline)
+	if err == nil { // Use /__log/debug endpoint to see the full query.
+		logrus.WithField("query", string(j)).Debug("Full query.")
 	}
 
 	return pipeline
