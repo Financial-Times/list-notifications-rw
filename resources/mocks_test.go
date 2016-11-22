@@ -72,6 +72,11 @@ func (m *MockTX) WriteNotification(notification *model.InternalNotification) {
 	m.Called(notification)
 }
 
+func (m *MockTX) EnsureIndices() error {
+	m.Called()
+	return nil
+}
+
 func (m *MockTX) Close() {
 	m.Called()
 }
