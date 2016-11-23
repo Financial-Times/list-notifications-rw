@@ -12,7 +12,7 @@ import (
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 	"gopkg.in/urfave/cli.v1/altsrc"
 )
 
