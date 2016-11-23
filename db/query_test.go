@@ -5,9 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/mgo.v2/bson"
 )
+
+func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+}
 
 func TestShiftSince(t *testing.T) {
 	cacheDelay = 42
@@ -51,7 +56,7 @@ func TestQuery(t *testing.T) {
 
 	query := generateQuery(50, since)
 
-	regex := regexp.MustCompile(`\[\{"\$match":\{"lastModified":\{"\$gte":\{"\$date":".*"},"\$lte":\{"\$date":".*"}}}},\{"\$sort":\{"lastModified":-1,"uuid":1}},\{"\$group":\{"_id":\{"uuid":"\$uuid"},"eventType":\{"\$first":"\$eventType"},"lastModified":\{"\$max":"\$lastModified"},"publishReference":\{"\$first":"\$publishReference"},"title":\{"\$first":"\$title"},"uuid":\{"\$first":"\$uuid"}}},\{"\$sort":\{"_id":1,"lastModified":1}},\{"\$skip":50},\{"\$limit":103}]`)
+	regex := regexp.MustCompile(`\[\{"\$match":\{"lastModified":\{"\$gte":\{"\$date":".*"},"\$lte":\{"\$date":".*"}}}},\{"\$sort":\{"lastModified":-1}},\{"\$group":\{"_id":"\$uuid","eventType":\{"\$first":"\$eventType"},"lastModified":\{"\$first":"\$lastModified"},"publishReference":\{"\$first":"\$publishReference"},"title":\{"\$first":"\$title"},"uuid":\{"\$first":"\$uuid"}}},\{"\$sort":\{"lastModified":1,"uuid":1}},\{"\$skip":50},\{"\$limit":103}]`)
 	data, _ := bson.MarshalJSON(query)
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }

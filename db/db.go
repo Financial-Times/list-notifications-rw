@@ -35,6 +35,25 @@ func (db *MongoDB) Open() (TX, error) {
 	return &MongoTX{db.session.Copy()}, nil
 }
 
+func (tx *MongoTX) EnsureIndices() error {
+	collection := tx.session.DB("upp-store").C("list-notifications")
+	lastModifiedIndex := mgo.Index{
+		Name: "last-modified-index",
+		Key:  []string{"-lastModified"},
+	}
+	err := collection.EnsureIndex(lastModifiedIndex)
+
+	if err != nil {
+		return err
+	}
+
+	uuidIndex := mgo.Index{
+		Name: "uuid-index",
+		Key:  []string{"uuid"},
+	}
+	return collection.EnsureIndex(uuidIndex)
+}
+
 // Close closes the entire database connection
 func (db *MongoDB) Close() {
 	db.session.Close()
@@ -90,6 +109,7 @@ type DB interface {
 type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
+	EnsureIndices() error
 	Ping() error
 	Close()
 }
