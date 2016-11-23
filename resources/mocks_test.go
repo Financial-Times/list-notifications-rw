@@ -20,12 +20,6 @@ func WriteRoute(handler func(w http.ResponseWriter, r *http.Request)) *mux.Route
 	return r
 }
 
-func LogRoute(handler func(w http.ResponseWriter, r *http.Request)) *mux.Router {
-	r := mux.NewRouter()
-	r.HandleFunc("/__log/{level}", handler)
-	return r
-}
-
 type MockDB struct {
 	mock.Mock
 }

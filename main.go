@@ -130,7 +130,7 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 
 	r.HandleFunc("/__health", resources.Health(db))
 
-	r.HandleFunc("/__log/{level}", resources.UpdateLogLevel())
+	r.HandleFunc("/__log", resources.UpdateLogLevel()).Methods("POST")
 
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
 
