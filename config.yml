@@ -3,3 +3,4 @@ api-host: test.api.ft.com
 limit: 1
 cache-max-age: 10
 dump-requests: true
+api-yml: ./api/api.yml

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -68,6 +69,12 @@ func main() {
 			Usage:  "Logs every write request in full HTTP/1.1 spec.",
 			EnvVar: "DUMP_REQUESTS",
 		}),
+		altsrc.NewStringFlag(cli.StringFlag{
+			Name:   "api-yml",
+			Usage:  "The location of this apps swagger.yml file.",
+			Value:  "/api.yml",
+			EnvVar: "API_YML",
+		}),
 		cli.StringFlag{
 			Name:  "config",
 			Value: "./config.yml",
@@ -113,14 +120,16 @@ func main() {
 			MaxLimit:   ctx.Int("limit"),
 		}
 
-		server(ctx.Int("port"), ctx.Int("max-since-interval"), ctx.Bool("dump-requests"), mapper, nextLink, mongo)
+		api, _ := ioutil.ReadFile(ctx.String("api-yml"))
+
+		server(ctx.Int("port"), ctx.Int("max-since-interval"), ctx.Bool("dump-requests"), mapper, nextLink, mongo, api)
 		return nil
 	}
 
 	app.Run(os.Args)
 }
 
-func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB, api []byte) {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
@@ -131,6 +140,7 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 	r.HandleFunc("/__health", resources.Health(db))
 
 	r.HandleFunc("/__log", resources.UpdateLogLevel()).Methods("POST")
+	r.HandleFunc("/__api", resources.API(api))
 
 	r.HandleFunc(status.GTGPath, resources.GTG(db))
 
