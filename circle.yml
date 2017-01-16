@@ -12,7 +12,7 @@ dependencies:
 test:
    pre:
       - go get github.com/mattn/goveralls
-      - dredd
+      - dredd -d
    override:
       - mkdir -p $CIRCLE_TEST_REPORTS/golang
       - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
