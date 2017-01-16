@@ -102,11 +102,10 @@ func sinceMessage() string {
 }
 
 func writeMessage(status int, message string, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 
 	m := msg{message}
 	encoder := json.NewEncoder(w)
 	encoder.Encode(m)
-
-	w.Header().Add("Content-Type", "application/json")
 }
