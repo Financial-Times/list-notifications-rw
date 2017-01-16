@@ -36,6 +36,10 @@ The default port is `8080`, but can be configured in the [config.yml](/config.ym
 
 ## API
 
+For API Blueprint style documentation, see [here](/api/api.md).
+
+For Swagger style documentation, see [here](/api/api.yml).
+
 Write a new list notification:
 
 ```
