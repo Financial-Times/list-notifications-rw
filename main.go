@@ -88,13 +88,13 @@ func main() {
 			CacheDelay: ctx.Int("cache-max-age"),
 		}
 
-		defer mongo.Close()
-
 		logrus.Info("Opening initial connection to Mongo.")
 		tx, err := mongo.Open()
 		if err != nil {
 			return err
 		}
+
+		defer mongo.Close()
 
 		logrus.Info("Ensuring Mongo indices are setup...")
 		err = tx.EnsureIndices()
