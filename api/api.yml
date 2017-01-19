@@ -22,8 +22,6 @@ paths:
          summary: Read API for List Notifications
          tags:
             - API
-         consumes:
-            - application/json
          parameters:
             -  name: since
                in: query
