@@ -12,10 +12,6 @@ Writes new List Notifications, and offers a Read API
 
     + since: 2017-01-15T11:16:33.403976795Z (required)
 
-+ Request (application/json)
-
-    + Body
-
 + Response 200 (application/json)
 
     Returns a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
@@ -42,10 +38,6 @@ Writes new List Notifications, and offers a Read API
               ]
             }
 
-+ Request (application/json)
-
-    + Body
-
 + Response 400 (application/json)
 
     We return 400 if any validation error occurs.
@@ -55,10 +47,6 @@ Writes new List Notifications, and offers a Read API
             {
               "message": "User didn't provide since date."
             }
-
-+ Request (application/json)
-
-    + Body
 
 + Response 500 (application/json)
 
