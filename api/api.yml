@@ -34,7 +34,7 @@ paths:
                format: date-time
          responses:
             200:
-               description: Returns a single page of notifications since the date provided. Maximum of 50 notifications per page. The `rel=next` link (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
+               description: Returns a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
                examples:
                   application/json:
                      requestUrl: "http://api.ft.com/lists/notifications?since=2016-11-19T16:10:57.398Z"
@@ -49,18 +49,18 @@ paths:
                         -  href: "http://api.ft.com/lists/notifications?since=2017-01-16T10%3A54%3A50.655Z"
                            rel: next
             400:
-               description: Returns 400 if any validation error occurs.
+               description: We return 400 if any validation error occurs.
                examples:
                   application/json:
                      message: User didn't provide since date.
             500:
-               description: Returns 500 if we fail to read data from MongoDB, or any other internal server error occurs.
+               description: We return 500 if we fail to read data from our underlying database, or any other unexpected internal server error occurs.
                examples:
                   application/json:
                      message: Failed to retrieve list notifications due to internal server error.
    /lists/{uuid}:
       put:
-         summary: Read API for List Notifications
+         summary: Write API for List Notifications
          tags:
             - API
          consumes:
@@ -69,18 +69,18 @@ paths:
             -  name: uuid
                in: path
                required: true
-               description: The uuid of the List notification to write.
+               description: The uuid of the List we're notifying about.
                x-example: ac1cc220-3e0d-4a34-855f-fc0cf205bc35
                type: string
             -  name: X-Request-Id
                in: header
                required: true
-               description: The transaction id for this publish.
+               description: The transaction id for this List publish.
                x-example: tid_abcdefghijklmn
                type: string
             -  name: body
                in: body
-               description: The fully transformed List body.
+               description: The fully transformed List body - all fields below are required. Additional fields are ignored.
                schema:
                   type: object
                   properties:
@@ -101,14 +101,14 @@ paths:
                      uuid: ac1cc220-3e0d-4a34-855f-fc0cf205bc35
          responses:
             200:
-               description: The new List notification has been written successfully.
+               description: The List notification has been written successfully.
             400:
-               description: The request body did not pass validation. This can be caused by malformed json, or uuids, or if the path uuid did not match the body uuid.
+               description: The request body did not pass validation. This can be caused by malformed json, invalid uuids, or if the uuid in the url path did not match the uuid present in the List body.
                examples:
                   application/json:
                      message: Invalid Request body.
             500:
-               description: Returns 500 if we failed to write the notification to MongoDB, or any other unexpected internal server error occurs.
+               description: We return 500 if we failed to write the notification to the underlying database, or any other unexpected internal server error occurs.
                examples:
                   application/json:
                      message: An internal server error prevented processing of your request.
@@ -121,7 +121,7 @@ paths:
             - Health
          responses:
             200:
-               description: Returns all etcd keys on the server as a json map.
+               description: We return pong in plaintext only.
                examples:
                   text/plain; charset=utf-8: pong
    /__health:
@@ -133,7 +133,7 @@ paths:
             - Health
          responses:
             200:
-               description: Should always return 200, with healthcheck output.
+               description: Should always return 200 along with the output of the healthchecks - regardless of whether the healthchecks failed or not. Please inspect the overall `ok` property to see whether or not the application is healthy.
                examples:
                   application/json:
                      checks:
@@ -168,14 +168,14 @@ paths:
                      dateTime: "20161123122615"
    /__gtg:
       get:
-         summary: Lightly healthchecks the application, and returns a 200 if it's GTG.
+         summary: Lightly healthchecks the application, and returns a 200 if it's Good-To-Go.
          tags:
             - Health
          responses:
             200:
-               description: The application is good to go.
+               description: The application is healthy enough to perform all its functions correctly - i.e. good to go.
             500:
-               description: One or more of the applications healthchecks have failed, so do not use the app. See the /__health endpoint for more information.
+               description: One or more of the applications healthchecks have failed, so please do not use the app. See the /__health endpoint for more detailed information.
    /__log:
       post:
          summary: Updates the log level for the application.
@@ -206,7 +206,7 @@ paths:
                   application/json:
                      message: Log level changed to debug
             400:
-               description: The level can only be "info" or "debug", all other levels will be ignored.
+               description: The level can only be "info" or "debug", all other levels (including junk text) will be ignored.
                examples:
                   application/json:
                      message: Please specify one of [debug, info]

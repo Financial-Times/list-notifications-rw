@@ -18,7 +18,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 200 (application/json)
 
-    Returns a single page of notifications since the date provided. Maximum of 50 notifications per page. The `rel=next` link (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
+    Returns a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
 
     + Body
 
@@ -48,7 +48,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 400 (application/json)
 
-    Returns 400 if any validation error occurs.
+    We return 400 if any validation error occurs.
 
     + Body
 
@@ -62,7 +62,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 500 (application/json)
 
-    Returns 500 if we fail to read data from MongoDB, or any other internal server error occurs.
+    We return 500 if we fail to read data from our underlying database, or any other unexpected internal server error occurs.
 
     + Body
 
@@ -72,7 +72,7 @@ Writes new List Notifications, and offers a Read API
 
 ### /lists/{uuid}
 
-#### Read API for List Notifications [PUT]
+#### Write API for List Notifications [PUT]
 
 + Parameters
 
@@ -119,7 +119,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 200
 
-    The new List notification has been written successfully.
+    The List notification has been written successfully.
 
     + Body
 
@@ -164,7 +164,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 400 (application/json)
 
-    The request body did not pass validation. This can be caused by malformed json, or uuids, or if the path uuid did not match the body uuid.
+    The request body did not pass validation. This can be caused by malformed json, invalid uuids, or if the uuid in the url path did not match the uuid present in the List body.
 
     + Body
 
@@ -213,7 +213,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 500 (application/json)
 
-    Returns 500 if we failed to write the notification to MongoDB, or any other unexpected internal server error occurs.
+    We return 500 if we failed to write the notification to the underlying database, or any other unexpected internal server error occurs.
 
     + Body
 
@@ -229,7 +229,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 200 (text/plain; charset=utf-8)
 
-    Returns all etcd keys on the server as a json map.
+    We return pong in plaintext only.
 
     + Body
 
@@ -249,7 +249,7 @@ Writes new List Notifications, and offers a Read API
 
 + Response 200 (application/json)
 
-    Should always return 200, with healthcheck output.
+    Should always return 200 along with the output of the healthchecks - regardless of whether the healthchecks failed or not. Please inspect the overall `ok` property to see whether or not the application is healthy.
 
     + Body
 
@@ -274,17 +274,17 @@ Writes new List Notifications, and offers a Read API
 
 ### /__gtg
 
-#### Lightly healthchecks the application, and returns a 200 if it's GTG. [GET]
+#### Lightly healthchecks the application, and returns a 200 if it's Good-To-Go. [GET]
 
 + Response 200
 
-    The application is good to go.
+    The application is healthy enough to perform all its functions correctly - i.e. good to go.
 
     + Body
 
 + Response 500
 
-    One or more of the applications healthchecks have failed, so do not use the app. See the /__health endpoint for more information.
+    One or more of the applications healthchecks have failed, so please do not use the app. See the /__health endpoint for more detailed information.
 
     + Body
 
@@ -378,12 +378,11 @@ Writes new List Notifications, and offers a Read API
 
 + Response 400 (application/json)
 
-    The level can only be "info" or "debug", all other levels will be ignored.
+    The level can only be "info" or "debug", all other levels (including junk text) will be ignored.
 
     + Body
 
             {
               "message": "Please specify one of [debug, info]"
             }
-
 
