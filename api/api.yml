@@ -8,7 +8,7 @@ info:
       name: Dynamic Publishing
       email: Dynamic.Publishing@ft.com
 
-host: localhost:8080
+host: api.ft.com
 
 schemes:
    - http
@@ -19,9 +19,10 @@ basePath: /
 paths:
    /lists/notifications:
       get:
-         summary: Read API for List Notifications
+         summary: Read List Notifications
+         description: Displays a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
          tags:
-            - API
+            - Public API
          parameters:
             -  name: since
                in: query
@@ -32,7 +33,7 @@ paths:
                format: date-time
          responses:
             200:
-               description: Returns a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
+               description: Shows a single page of notifications.
                examples:
                   application/json:
                      requestUrl: "http://api.ft.com/lists/notifications?since=2016-11-19T16:10:57.398Z"
@@ -47,20 +48,21 @@ paths:
                         -  href: "http://api.ft.com/lists/notifications?since=2017-01-16T10%3A54%3A50.655Z"
                            rel: next
             400:
-               description: We return 400 if any validation error occurs.
+               description: A validation error has occurred, please see the error message for more details.
                examples:
                   application/json:
                      message: User didn't provide since date.
             500:
-               description: We return 500 if we fail to read data from our underlying database, or any other unexpected internal server error occurs.
+               description: We failed to read data from our underlying database, or another unexpected internal server error occurred.
                examples:
                   application/json:
                      message: Failed to retrieve list notifications due to internal server error.
    /lists/{uuid}:
       put:
-         summary: Write API for List Notifications
+         summary: Write new List Notifications
+         description: FOR INTERNAL USE ONLY!
          tags:
-            - API
+            - Internal API
          consumes:
             - application/json
          parameters:
@@ -78,7 +80,7 @@ paths:
                type: string
             -  name: body
                in: body
-               description: The fully transformed List body - all fields below are required. Additional fields are ignored.
+               description: The fully transformed List body. Additional fields are ignored.
                schema:
                   type: object
                   properties:
@@ -106,13 +108,14 @@ paths:
                   application/json:
                      message: Invalid Request body.
             500:
-               description: We return 500 if we failed to write the notification to the underlying database, or any other unexpected internal server error occurs.
+               description: We failed to write data to our underlying database, or another unexpected internal server error occurred.
                examples:
                   application/json:
                      message: An internal server error prevented processing of your request.
    /__ping:
       get:
-         summary: Returns "pong" if the server is running.
+         summary: Ping
+         description: Returns "pong" if the server is running.
          produces:
             - text/plain; charset=utf-8
          tags:
@@ -124,7 +127,8 @@ paths:
                   text/plain; charset=utf-8: pong
    /__health:
       get:
-         summary: Runs application healthchecks and returns FT Healthcheck style json.
+         summary: Healthchecks
+         description: Runs application healthchecks and returns FT Healthcheck style json.
          produces:
             - application/json
          tags:
@@ -149,7 +153,8 @@ paths:
                      schemaVersion: 1
    /__build-info:
       get:
-         summary: Returns application build info, such as the git repository and revision, the golang version it was built with, and the app release version.
+         summary: Build Information
+         description: Returns application build info, such as the git repository and revision, the golang version it was built with, and the app release version.
          produces:
             - application/json; charset=UTF-8
          tags:
@@ -166,7 +171,8 @@ paths:
                      dateTime: "20161123122615"
    /__gtg:
       get:
-         summary: Lightly healthchecks the application, and returns a 200 if it's Good-To-Go.
+         summary: Good To Go
+         description: Lightly healthchecks the application, and returns a 200 if it's Good-To-Go.
          tags:
             - Health
          responses:
@@ -176,7 +182,8 @@ paths:
                description: One or more of the applications healthchecks have failed, so please do not use the app. See the /__health endpoint for more detailed information.
    /__log:
       post:
-         summary: Updates the log level for the application.
+         summary: Logging Control
+         description: Updates the log level for the application.
          tags:
             - Debugging
          consumes:

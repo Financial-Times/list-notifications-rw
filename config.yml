@@ -1,6 +1,7 @@
-db: localhost:27017
+db: 192.168.99.100:27017
 api-host: test.api.ft.com
 limit: 1
 cache-max-age: 10
 dump-requests: true
 api-yml: ./api/api.yml
+port: 9009
