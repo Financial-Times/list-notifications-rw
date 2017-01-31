@@ -23,6 +23,7 @@ RUN apk add --update bash \
   && go get ./... \
   && go build -ldflags="${LDFLAGS}" \
   && mv ./list-notifications-rw / \
+  && mv ./api/api.yml / \
   && touch /config.yml \
   && apk del go git \
   && rm -rf $GOPATH /var/cache/apk/*
