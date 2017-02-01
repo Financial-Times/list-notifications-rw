@@ -98,6 +98,24 @@ func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inte
 	return &results, nil
 }
 
+// FindNotification locates one instance of a notification with the given Transaction ID (publishReference)
+func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, error) {
+	collection := tx.session.DB("upp-store").C("list-notifications")
+
+	query := findByTxId(txid)
+
+	pipe := collection.Find(query)
+	result := []model.InternalNotification{}
+
+	err := pipe.Limit(1).All(&result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // DB contains database functions
 type DB interface {
 	Open() (TX, error)
@@ -109,6 +127,7 @@ type DB interface {
 type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
+	FindNotification(txid string) (*[]model.InternalNotification, error)
 	EnsureIndices() error
 	Ping() error
 	Close()

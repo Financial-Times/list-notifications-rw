@@ -62,6 +62,16 @@ func (m *MockTX) ReadNotifications(offset int, since time.Time) (*[]model.Intern
 	return notifications.(*[]model.InternalNotification), args.Error(1)
 }
 
+func (m *MockTX) FindNotification(txid string) (*[]model.InternalNotification, error) {
+	args := m.Called(txid)
+	notifications := args.Get(0)
+	if notifications == nil {
+		return nil, args.Error(1)
+	}
+
+	return notifications.(*[]model.InternalNotification), args.Error(1)
+}
+
 func (m *MockTX) WriteNotification(notification *model.InternalNotification) {
 	m.Called(notification)
 }

@@ -9,6 +9,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+func findByTxId(txid string) bson.M {
+	return bson.M{"publishReference": txid}
+}
+
 func generateQuery(offset int, since time.Time) []bson.M {
 	match := getMatch(offset, since)
 

@@ -3,12 +3,18 @@ package resources
 import (
 	"compress/gzip"
 	"net/http"
+	"regexp"
 	"strings"
 
+	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Sirupsen/logrus"
 )
 
 const synthTidPrefix = "SYNTHETIC-REQ-MON"
+
+var generatedCarouselTidRegex = regexp.MustCompile(`(tid_[\S]+)_carousel_[\d]{10}_gentx`)
+var carouselTidRegex = regexp.MustCompile(`(tid_[\S]+)_carousel_[\d]{10}`)
+
 const tidHeader = "X-Request-Id"
 
 // Filters contains the composed chain
@@ -35,6 +41,13 @@ func (f Filters) Gunzip() Filters {
 	return f
 }
 
+// FilterCarouselPublishes checks whether this is a carousel publish and processes it accordingly
+func (f Filters) FilterCarouselPublishes(db db.DB) Filters {
+	next := f.next
+	f.next = filterCarouselPublishes(db, next)
+	return f
+}
+
 // Build returns the final chained handler
 func (f Filters) Build() func(w http.ResponseWriter, r *http.Request) {
 	return f.next
@@ -56,6 +69,50 @@ func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 		}
 
 		next(w, r)
+	}
+}
+
+func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tid := r.Header.Get(tidHeader)
+
+		if generatedCarouselTidRegex.MatchString(tid) {
+			logrus.WithField("tid", tid).Info("Skipping generated carousel publish.")
+			writeError("Skipping generated carousel publish.", 200, w)
+			return
+		}
+
+		if !carouselTidRegex.MatchString(tid) {
+			next(w, r)
+			return
+		}
+
+		logrus.WithField("tid", tid).Infof("Received carousel notification.")
+		originalTid := carouselTidRegex.FindStringSubmatch(tid)[1]
+
+		tx, err := db.Open()
+		if err != nil {
+			logrus.WithError(err).Error("Failed to connect to mongo")
+			writeError("An internal server error prevented processing of your request.", 500, w)
+			return
+		}
+
+		defer tx.Close()
+
+		notifications, err := tx.FindNotification(originalTid)
+		if err != nil {
+			logrus.WithField("tid", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+			next(w, r)
+			return
+		}
+
+		if notifications == nil || len(*notifications) == 0 {
+			next(w, r)
+			return
+		}
+
+		logrus.WithField("tid", tid).WithField("published", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+		writeError("Skipping carousel publish; the original notification was published successfully.", 200, w)
 	}
 }
 
