@@ -60,3 +60,10 @@ func TestQuery(t *testing.T) {
 	data, _ := bson.MarshalJSON(query)
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }
+
+func TestFindNotificationQuery(t *testing.T) {
+	query := findByTxId("tid_i-am-a-tid")
+
+	data, _ := bson.MarshalJSON(query)
+	assert.Contains(t, string(data), `{"publishReference":"tid_i-am-a-tid"}`, "Query json should match!")
+}
