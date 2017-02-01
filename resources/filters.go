@@ -12,8 +12,8 @@ import (
 
 const synthTidPrefix = "SYNTHETIC-REQ-MON"
 
-var generatedCarouselTidRegex = regexp.MustCompile(`(tid_[\S]+)_carousel_[\d]{10}_gentx`)
-var carouselTidRegex = regexp.MustCompile(`(tid_[\S]+)_carousel_[\d]{10}`)
+var generatedCarouselTidRegex = regexp.MustCompile(`^(tid_[\S]+)_carousel_[\d]{10}_gentx`)
+var carouselTidRegex = regexp.MustCompile(`^(tid_[\S]+)_carousel_[\d]{10}`)
 
 const tidHeader = "X-Request-Id"
 
