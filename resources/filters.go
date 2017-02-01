@@ -58,13 +58,13 @@ func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {
 			logrus.WithField("tid", tid).Infof("Rejecting notification; it has no transaction id.")
-			writeError("Rejecting notification; it has no transaction id.", 400, w)
+			writeMessage("Rejecting notification; it has no transaction id.", 400, w)
 			return
 		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
 			logrus.WithField("tid", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
-			writeError("Rejecting notification; it has a synthetic transaction id.", 200, w)
+			writeMessage("Rejecting notification; it has a synthetic transaction id.", 200, w)
 			return
 		}
 
@@ -78,7 +78,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 
 		if generatedCarouselTidRegex.MatchString(tid) {
 			logrus.WithField("tid", tid).Info("Skipping generated carousel publish.")
-			writeError("Skipping generated carousel publish.", 200, w)
+			writeMessage("Skipping generated carousel publish.", 200, w)
 			return
 		}
 
@@ -93,7 +93,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 		tx, err := db.Open()
 		if err != nil {
 			logrus.WithError(err).Error("Failed to connect to mongo")
-			writeError("An internal server error prevented processing of your request.", 500, w)
+			writeMessage("An internal server error prevented processing of your request.", 500, w)
 			return
 		}
 
@@ -112,7 +112,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 		}
 
 		logrus.WithField("tid", tid).WithField("published", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
-		writeError("Skipping carousel publish; the original notification was published successfully.", 200, w)
+		writeMessage("Skipping carousel publish; the original notification was published successfully.", 200, w)
 	}
 }
 
@@ -121,7 +121,7 @@ func gunzip(next func(w http.ResponseWriter, r *http.Request)) func(w http.Respo
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			unzipped, err := gzip.NewReader(r.Body)
 			if err != nil {
-				writeError(err.Error(), http.StatusBadRequest, w)
+				writeMessage(err.Error(), http.StatusBadRequest, w)
 				return
 			}
 
