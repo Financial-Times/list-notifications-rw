@@ -69,6 +69,7 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 	}
 
 	host, _, _ := net.SplitHostPort(dockerURL.Host)
+	t.Log("Starting Mongo instance at " + host + ":" + strconv.FormatInt(port, 10))
 
 	assert.NoError(t, err, "Should be proper url!")
 
