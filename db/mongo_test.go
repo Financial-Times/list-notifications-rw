@@ -3,9 +3,9 @@ package db
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -63,8 +63,11 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 		}
 	}
 
+	mongoURL := dockerMachineIP() + ":" + strconv.FormatInt(port, 10)
+	t.Log(mongoURL)
+
 	mongo := &MongoDB{
-		Urls:       dockerMachineIP() + ":" + strconv.FormatInt(port, 10),
+		Urls:       mongoURL,
 		Timeout:    3800,
 		MaxLimit:   limit,
 		CacheDelay: 10,
@@ -74,27 +77,15 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 }
 
 func dockerMachineIP() string {
-	var dockerMachine bool
-	machine := os.Getenv("DOCKER_MACHINE_NAME")
-	if machine != "" {
-		dockerMachine = true
-	}
-
 	var buf bytes.Buffer
-
-	var cmd *exec.Cmd
-	if dockerMachine {
-		cmd = exec.Command("docker-machine", "ip", machine)
-	} else {
-		cmd = exec.Command("boot2docker", "ip")
-	}
+	cmd := exec.Command("docker-machine", "ip")
 	cmd.Stdout = &buf
 
 	if err := cmd.Run(); err != nil {
-		return ""
+		return "localhost"
 	}
 
-	return buf.String()
+	return strings.TrimSpace(buf.String())
 }
 
 func waitStarted(client *docker.Client, id string, maxWait time.Duration) error {
@@ -109,7 +100,7 @@ func waitStarted(client *docker.Client, id string, maxWait time.Duration) error 
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	return fmt.Errorf("cannot start container %s for %v", id, maxWait)
+	return fmt.Errorf("Cannot start container %s for %v", id, maxWait)
 }
 
 func createOptions(dbname string) docker.CreateContainerOptions {
