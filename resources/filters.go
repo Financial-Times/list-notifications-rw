@@ -57,13 +57,13 @@ func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {
-			logrus.WithField("tid", tid).Infof("Rejecting notification; it has no transaction id.")
+			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has no transaction id.")
 			writeMessage("Rejecting notification; it has no transaction id.", 400, w)
 			return
 		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
-			logrus.WithField("tid", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
+			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
 			writeMessage("Rejecting notification; it has a synthetic transaction id.", 200, w)
 			return
 		}
@@ -77,7 +77,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 		tid := r.Header.Get(tidHeader)
 
 		if generatedCarouselTidRegex.MatchString(tid) {
-			logrus.WithField("tid", tid).Info("Skipping generated carousel publish.")
+			logrus.WithField("transaction_id", tid).Info("Skipping generated carousel publish.")
 			writeMessage("Skipping generated carousel publish.", 200, w)
 			return
 		}
@@ -87,7 +87,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 			return
 		}
 
-		logrus.WithField("tid", tid).Infof("Received carousel notification.")
+		logrus.WithField("transaction_id", tid).Infof("Received carousel notification.")
 		originalTid := carouselTidRegex.FindStringSubmatch(tid)[1]
 
 		tx, err := db.Open()
@@ -101,7 +101,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 
 		notifications, err := tx.FindNotification(originalTid)
 		if err != nil {
-			logrus.WithField("tid", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+			logrus.WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
 			next(w, r)
 			return
 		}
@@ -111,7 +111,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 			return
 		}
 
-		logrus.WithField("tid", tid).WithField("published", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+		logrus.WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
 		writeMessage("Skipping carousel publish; the original notification was published successfully.", 200, w)
 	}
 }

@@ -42,7 +42,7 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 
 		tx.WriteNotification(notification)
 
-		logrus.WithField("uuid", uuid).WithField("tid", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
 		w.WriteHeader(200)
 	}
 }

@@ -1,3 +1,7 @@
+machine:
+   services:
+      - docker
+
 dependencies:
   pre:
     - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
