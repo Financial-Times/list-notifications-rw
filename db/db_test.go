@@ -11,6 +11,7 @@ import (
 func TestOpenPingAndConfig(t *testing.T) {
 	mongo, cleanup := startMongo(t, 200)
 	defer cleanup()
+	defer mongo.Close()
 
 	tx, err := mongo.Open()
 
@@ -33,8 +34,8 @@ func TestOpenPingAndConfig(t *testing.T) {
 
 func TestEnsureIndexes(t *testing.T) {
 	mongo, cleanup := startMongo(t, 200)
-	defer mongo.Close()
 	defer cleanup()
+	defer mongo.Close()
 
 	tx, err := mongo.Open()
 
@@ -67,8 +68,8 @@ func TestEnsureIndexes(t *testing.T) {
 
 func TestReadWriteFind(t *testing.T) {
 	mongo, cleanup := startMongo(t, 200)
-	defer mongo.Close()
 	defer cleanup()
+	defer mongo.Close()
 
 	tx, err := mongo.Open()
 
