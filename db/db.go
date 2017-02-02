@@ -47,6 +47,16 @@ func (tx *MongoTX) EnsureIndices() error {
 		return err
 	}
 
+	publishReferenceIndex := mgo.Index{
+		Name: "publish-reference-index",
+		Key:  []string{"publishReference"},
+	}
+	err = collection.EnsureIndex(publishReferenceIndex)
+
+	if err != nil {
+		return err
+	}
+
 	uuidIndex := mgo.Index{
 		Name: "uuid-index",
 		Key:  []string{"uuid"},
