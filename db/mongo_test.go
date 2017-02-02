@@ -63,6 +63,7 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 		}
 	}
 
+	t.Log(client.Endpoint())
 	dockerURL, err := url.Parse(client.Endpoint())
 	if err != nil {
 		t.Fatal("Docker host endpoint should be a valid url!")
