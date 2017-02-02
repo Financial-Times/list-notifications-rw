@@ -1,15 +1,15 @@
 package db
 
 import (
+	"bytes"
 	"fmt"
-	"net"
-	"net/url"
+	"os"
+	"os/exec"
 	"strconv"
 	"testing"
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/stretchr/testify/assert"
 )
 
 func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
@@ -63,25 +63,38 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 		}
 	}
 
-	t.Log(client.Endpoint())
-	dockerURL, err := url.Parse(client.Endpoint())
-	if err != nil {
-		t.Fatal("Docker host endpoint should be a valid url!")
-	}
-
-	host, _, _ := net.SplitHostPort(dockerURL.Host)
-	t.Log("Starting Mongo instance at " + host + ":" + strconv.FormatInt(port, 10))
-
-	assert.NoError(t, err, "Should be proper url!")
-
 	mongo := &MongoDB{
-		Urls:       host + ":" + strconv.FormatInt(port, 10),
+		Urls:       dockerMachineIP() + ":" + strconv.FormatInt(port, 10),
 		Timeout:    3800,
 		MaxLimit:   limit,
 		CacheDelay: 10,
 	}
 
 	return mongo, cleanup
+}
+
+func dockerMachineIP() string {
+	var dockerMachine bool
+	machine := os.Getenv("DOCKER_MACHINE_NAME")
+	if machine != "" {
+		dockerMachine = true
+	}
+
+	var buf bytes.Buffer
+
+	var cmd *exec.Cmd
+	if dockerMachine {
+		cmd = exec.Command("docker-machine", "ip", machine)
+	} else {
+		cmd = exec.Command("boot2docker", "ip")
+	}
+	cmd.Stdout = &buf
+
+	if err := cmd.Run(); err != nil {
+		return ""
+	}
+
+	return buf.String()
 }
 
 func waitStarted(client *docker.Client, id string, maxWait time.Duration) error {
