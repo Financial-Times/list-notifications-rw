@@ -34,7 +34,7 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 			ID:    c.ID,
 			Force: true,
 		}); err != nil {
-			t.Fatalf("cannot remove container: %s", err)
+			t.Logf("WARNING: Cannot remove container! %s", err)
 		}
 	}
 
