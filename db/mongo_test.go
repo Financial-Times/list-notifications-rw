@@ -2,7 +2,6 @@ package db
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -58,11 +57,8 @@ func startMongo(t *testing.T, limit int) (*MongoDB, func()) {
 		t.Fatal("No mapped ports!")
 	}
 
-	b, _ := json.Marshal(c.NetworkSettings.PortMappingAPI())
-	t.Log(string(b))
-
 	for _, mapping := range c.NetworkSettings.PortMappingAPI() {
-		if mapping.PrivatePort == 27017 {
+		if mapping.PrivatePort == 27017 && mapping.PublicPort != 0 {
 			port = mapping.PublicPort
 		}
 	}
