@@ -13,7 +13,7 @@ func startMongo(t *testing.T, limit int) *MongoDB {
 
 	mongoURL := os.Getenv("MONGO_TEST_URL")
 	if strings.TrimSpace(mongoURL) == "" {
-		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests. Alternatively, run `go test -short` to skip them.")
+		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
 	}
 
 	return &MongoDB{
