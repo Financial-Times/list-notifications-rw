@@ -15,10 +15,10 @@ test:
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
     - |
-      MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
+      export MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
       go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
     - |
-      MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
+      export MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
       go list ./... | awk -F/ '{print $4}' | xargs -I {} go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/{}.out ./{}
     - cd $CIRCLE_ARTIFACTS && sed -i '1d' *.out
     - |
