@@ -5,7 +5,8 @@ machine:
 dependencies:
   pre:
     - docker pull mongo:3.0.14
-    - export MONGO_CONTAINER_ID=$(docker run -d -P mongo:3.0.14)
+    - docker run -d -P mongo:3.0.14
+    - export MONGO_CONTAINER_ID=$(docker ps | grep mongo | awk '{print $1}')
     - echo $MONGO_CONTAINER_ID
     - export MONGO_TEST_URL=$(docker port $MONGO_CONTAINER_ID 27017)
     - echo $MONGO_TEST_URL
