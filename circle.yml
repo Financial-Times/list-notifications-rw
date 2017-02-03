@@ -6,7 +6,9 @@ dependencies:
   pre:
     - docker pull mongo:3.0.14
     - export MONGO_CONTAINER_ID=$(docker run -d -P mongo:3.0.14)
+    - echo $MONGO_CONTAINER_ID
     - export MONGO_TEST_URL=$(docker port $MONGO_CONTAINER_ID 27017)
+    - echo $MONGO_TEST_URL
     - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
 
 test:
