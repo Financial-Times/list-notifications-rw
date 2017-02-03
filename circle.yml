@@ -7,7 +7,6 @@ dependencies:
     - docker pull mongo:3.0.14
     - docker run -d -P mongo:3.0.14
     - docker port $(docker ps | grep mongo | awk '{print $1}') 27017
-    - echo "export MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017)" >> ~/.circleci
     - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
 
 test:
@@ -15,8 +14,12 @@ test:
     - go get github.com/mattn/goveralls
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
-    - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-    - go list ./... | awk -F/ '{print $4}' | xargs -I {} go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/{}.out ./{}
+    - |
+      MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
+      go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
+    - |
+      MONGO_TEST_URL=$(docker port $(docker ps | grep mongo | awk '{print $1}') 27017);
+      go list ./... | awk -F/ '{print $4}' | xargs -I {} go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/{}.out ./{}
     - cd $CIRCLE_ARTIFACTS && sed -i '1d' *.out
     - |
       echo "mode: atomic" > $CIRCLE_ARTIFACTS/overall-coverage.result
