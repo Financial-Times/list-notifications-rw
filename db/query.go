@@ -13,6 +13,10 @@ func findByTxId(txid string) bson.M {
 	return bson.M{"publishReference": txid}
 }
 
+func findByPartialTxId(txid string) bson.M {
+	return bson.M{"publishReference": bson.M{"$regex": "^" + txid}}
+}
+
 func generateQuery(offset int, since time.Time) []bson.M {
 	match := getMatch(offset, since)
 

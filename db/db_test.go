@@ -93,10 +93,43 @@ func TestReadWriteFind(t *testing.T) {
 	assert.Equal(t, (*notifications)[0].EventType, "http://www.ft.com/thing/ThingChangeType/UPDATE", "EventType should match")
 	assert.Equal(t, (*notifications)[0].LastModified, time.Date(2017, 02, 02, 12, 51, 0, 0, time.Local), "Time should match")
 
-	notifications, err = tx.FindNotification("tid_faketxid")
+	notifications, found, err := tx.FindNotification("tid_faketxid")
 	assert.NoError(t, err, "Should not error")
 	assert.NotNil(t, notifications, "Should not be nil")
 
+	assert.True(t, found)
+
 	assert.Len(t, *notifications, 1, "Should be one notification")
 	assert.Equal(t, (*notifications)[0].PublishReference, "tid_faketxid", "TXID should match")
+
+	notifications, found, err = tx.FindNotificationByPartialTransactionID("tid_fake")
+	assert.NoError(t, err, "Should not error")
+	assert.NotNil(t, notifications, "Should not be nil")
+
+	assert.True(t, found)
+
+	assert.Len(t, *notifications, 1, "Should be one notification")
+	assert.Equal(t, (*notifications)[0].PublishReference, "tid_faketxid", "TXID should match")
+}
+
+func TestNotFound(t *testing.T) {
+	mongo := startMongo(t, 200)
+	defer mongo.Close()
+
+	tx, err := mongo.Open()
+
+	assert.NoError(t, err, "Should not error opening a connection to a fresh mongo instance!")
+	assert.NotNil(t, mongo.session, "Sesssion should not be nil!")
+
+	notifications, found, err := tx.FindNotification("tid_i-dont-exist")
+	assert.NoError(t, err)
+	assert.NotNil(t, notifications)
+
+	assert.False(t, found)
+
+	notifications, found, err = tx.FindNotificationByPartialTransactionID("tid_i-dont-exist")
+	assert.NoError(t, err)
+	assert.NotNil(t, notifications)
+
+	assert.False(t, found)
 }

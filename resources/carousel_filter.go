@@ -59,13 +59,25 @@ func shouldWriteNotification(tid string, db db.DB) (bool, error) {
 
 	defer tx.Close()
 
-	notifications, err := tx.FindNotification(originalTid)
+	notifications, found, err := tx.FindNotification(originalTid)
 	if err != nil {
 		logrus.WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
 		return true, nil
 	}
 
-	if notifications == nil || len(*notifications) == 0 {
+	if found {
+		logrus.WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+		return false, nil
+	}
+
+	logrus.WithField("transaction_id", tid).Info("Failed to find notification for original transaction ID, checking for a related carousel transacation.")
+	notifications, found, err = tx.FindNotificationByPartialTransactionID(originalTid + "_carousel")
+	if err != nil {
+		logrus.WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+		return true, nil
+	}
+
+	if !found {
 		return true, nil
 	}
 

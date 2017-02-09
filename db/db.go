@@ -109,7 +109,7 @@ func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inte
 }
 
 // FindNotification locates one instance of a notification with the given Transaction ID (publishReference)
-func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, error) {
+func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, bool, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
 
 	query := findByTxId(txid)
@@ -120,10 +120,36 @@ func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification,
 	err := pipe.Limit(1).All(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return &result, nil
+	if len(result) == 0 {
+		return &result, false, nil
+	}
+
+	return &result, true, nil
+}
+
+// FindNotificationByPartialTransactionID locates one instance of a notification with the given Transaction ID (publishReference)
+func (tx *MongoTX) FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error) {
+	collection := tx.session.DB("upp-store").C("list-notifications")
+
+	query := findByPartialTxId(txid)
+
+	pipe := collection.Find(query)
+	result := []model.InternalNotification{}
+
+	err := pipe.Limit(1).All(&result)
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(result) == 0 {
+		return &result, false, nil
+	}
+
+	return &result, true, nil
 }
 
 // DB contains database functions
@@ -137,7 +163,8 @@ type DB interface {
 type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
-	FindNotification(txid string) (*[]model.InternalNotification, error)
+	FindNotification(txid string) (*[]model.InternalNotification, bool, error)
+	FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error)
 	EnsureIndices() error
 	Ping() error
 	Close()
