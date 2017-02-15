@@ -6,6 +6,7 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/Sirupsen/logrus"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var maxLimit int
@@ -111,31 +112,18 @@ func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inte
 // FindNotification locates one instance of a notification with the given Transaction ID (publishReference)
 func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, bool, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
-
 	query := findByTxId(txid)
-
-	pipe := collection.Find(query)
-	result := []model.InternalNotification{}
-
-	err := pipe.Limit(1).All(&result)
-
-	if err != nil {
-		return nil, false, err
-	}
-
-	if len(result) == 0 {
-		return &result, false, nil
-	}
-
-	return &result, true, nil
+	return findUsingQuery(collection, query, 1)
 }
 
 // FindNotificationByPartialTransactionID locates one instance of a notification with the given Transaction ID (publishReference)
 func (tx *MongoTX) FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
-
 	query := findByPartialTxId(txid)
+	return findUsingQuery(collection, query, 1)
+}
 
+func findUsingQuery(collection *mgo.Collection, query bson.M, limit int) (*[]model.InternalNotification, bool, error) {
 	pipe := collection.Find(query)
 	result := []model.InternalNotification{}
 
