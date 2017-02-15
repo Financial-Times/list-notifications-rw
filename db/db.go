@@ -112,14 +112,14 @@ func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inte
 // FindNotification locates one instance of a notification with the given Transaction ID (publishReference)
 func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, bool, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
-	query := findByTxId(txid)
+	query := findByTxID(txid)
 	return findUsingQuery(collection, query, 1)
 }
 
 // FindNotificationByPartialTransactionID locates one instance of a notification with the given Transaction ID (publishReference)
 func (tx *MongoTX) FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error) {
 	collection := tx.session.DB("upp-store").C("list-notifications")
-	query := findByPartialTxId(txid)
+	query := findByPartialTxID(txid)
 	return findUsingQuery(collection, query, 1)
 }
 

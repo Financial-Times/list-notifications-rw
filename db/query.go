@@ -9,11 +9,11 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func findByTxId(txid string) bson.M {
+func findByTxID(txid string) bson.M {
 	return bson.M{"publishReference": txid}
 }
 
-func findByPartialTxId(txid string) bson.M {
+func findByPartialTxID(txid string) bson.M {
 	return bson.M{"publishReference": bson.M{"$regex": "^" + txid}}
 }
 
