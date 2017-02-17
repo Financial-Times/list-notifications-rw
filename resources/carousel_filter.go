@@ -25,7 +25,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 		uuid := mux.Vars(r)["uuid"]
 
 		if generatedCarouselTidRegex.MatchString(tid) {
-			logrus.WithField("transaction_id", tid).Info("Skipping generated carousel publish.")
+			logrus.WithField("uuid", uuid).WithField("transaction_id", tid).Info("Skipping generated carousel publish.")
 			writeMessage("Skipping generated carousel publish.", 200, w)
 			return
 		}
