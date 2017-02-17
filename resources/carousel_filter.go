@@ -6,6 +6,7 @@ import (
 
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 var generatedCarouselTidRegex = regexp.MustCompile(`^(tid_[\S]+)_carousel_[\d]{10}_gentx`)
@@ -21,6 +22,7 @@ func (f Filters) FilterCarouselPublishes(db db.DB) Filters {
 func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
+		uuid := mux.Vars(r)["uuid"]
 
 		if generatedCarouselTidRegex.MatchString(tid) {
 			logrus.WithField("transaction_id", tid).Info("Skipping generated carousel publish.")
@@ -28,7 +30,7 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 			return
 		}
 
-		writeNotification, err := shouldWriteNotification(tid, db)
+		writeNotification, err := shouldWriteNotification(uuid, tid, db)
 		if err != nil {
 			writeMessage("An internal server error prevented processing of your request.", 500, w)
 			return
@@ -43,17 +45,17 @@ func filterCarouselPublishes(db db.DB, next func(w http.ResponseWriter, r *http.
 	}
 }
 
-func shouldWriteNotification(tid string, db db.DB) (bool, error) {
+func shouldWriteNotification(uuid string, tid string, db db.DB) (bool, error) {
 	if !carouselTidRegex.MatchString(tid) {
 		return true, nil
 	}
 
-	logrus.WithField("transaction_id", tid).Infof("Received carousel notification.")
+	logrus.WithField("uuid", uuid).WithField("transaction_id", tid).Infof("Received carousel notification.")
 	originalTid := carouselTidRegex.FindStringSubmatch(tid)[1]
 
 	tx, err := db.Open()
 	if err != nil {
-		logrus.WithError(err).Error("Failed to connect to mongo")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to connect to mongo")
 		return false, err
 	}
 
@@ -61,19 +63,19 @@ func shouldWriteNotification(tid string, db db.DB) (bool, error) {
 
 	notifications, found, err := tx.FindNotification(originalTid)
 	if err != nil {
-		logrus.WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
 		return true, nil
 	}
 
 	if found {
-		logrus.WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
 		return false, nil
 	}
 
-	logrus.WithField("transaction_id", tid).Info("Failed to find notification for original transaction ID, checking for a related carousel transacation.")
+	logrus.WithField("uuid", uuid).WithField("transaction_id", tid).Info("Failed to find notification for original transaction ID, checking for a related carousel transacation.")
 	notifications, found, err = tx.FindNotificationByPartialTransactionID(originalTid + "_carousel")
 	if err != nil {
-		logrus.WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
 		return true, nil
 	}
 
@@ -81,6 +83,6 @@ func shouldWriteNotification(tid string, db db.DB) (bool, error) {
 		return true, nil
 	}
 
-	logrus.WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+	logrus.WithField("uuid", uuid).WithField("transaction_id", tid).WithField("lastModified", (*notifications)[0].LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
 	return false, nil
 }
