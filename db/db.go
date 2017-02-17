@@ -6,6 +6,7 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/Sirupsen/logrus"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var maxLimit int
@@ -42,6 +43,16 @@ func (tx *MongoTX) EnsureIndices() error {
 		Key:  []string{"-lastModified"},
 	}
 	err := collection.EnsureIndex(lastModifiedIndex)
+
+	if err != nil {
+		return err
+	}
+
+	publishReferenceIndex := mgo.Index{
+		Name: "publish-reference-index",
+		Key:  []string{"publishReference"},
+	}
+	err = collection.EnsureIndex(publishReferenceIndex)
 
 	if err != nil {
 		return err
@@ -98,6 +109,37 @@ func (tx *MongoTX) ReadNotifications(offset int, since time.Time) (*[]model.Inte
 	return &results, nil
 }
 
+// FindNotification locates one instance of a notification with the given Transaction ID (publishReference)
+func (tx *MongoTX) FindNotification(txid string) (*[]model.InternalNotification, bool, error) {
+	collection := tx.session.DB("upp-store").C("list-notifications")
+	query := findByTxID(txid)
+	return findUsingQuery(collection, query, 1)
+}
+
+// FindNotificationByPartialTransactionID locates one instance of a notification with the given Transaction ID (publishReference)
+func (tx *MongoTX) FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error) {
+	collection := tx.session.DB("upp-store").C("list-notifications")
+	query := findByPartialTxID(txid)
+	return findUsingQuery(collection, query, 1)
+}
+
+func findUsingQuery(collection *mgo.Collection, query bson.M, limit int) (*[]model.InternalNotification, bool, error) {
+	pipe := collection.Find(query)
+	result := []model.InternalNotification{}
+
+	err := pipe.Limit(1).All(&result)
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(result) == 0 {
+		return &result, false, nil
+	}
+
+	return &result, true, nil
+}
+
 // DB contains database functions
 type DB interface {
 	Open() (TX, error)
@@ -109,6 +151,8 @@ type DB interface {
 type TX interface {
 	WriteNotification(notification *model.InternalNotification)
 	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
+	FindNotification(txid string) (*[]model.InternalNotification, bool, error)
+	FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error)
 	EnsureIndices() error
 	Ping() error
 	Close()

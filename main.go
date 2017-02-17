@@ -125,7 +125,7 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
 
-	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().Gunzip().Build()
+	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
 	r.HandleFunc("/__health", resources.Health(db))

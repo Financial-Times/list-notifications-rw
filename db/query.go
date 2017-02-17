@@ -9,6 +9,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+func findByTxID(txid string) bson.M {
+	return bson.M{"publishReference": txid}
+}
+
+func findByPartialTxID(txid string) bson.M {
+	return bson.M{"publishReference": bson.M{"$regex": "^" + txid}}
+}
+
 func generateQuery(offset int, since time.Time) []bson.M {
 	match := getMatch(offset, since)
 

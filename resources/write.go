@@ -27,14 +27,14 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 				WithField("uuid", uuid).
 				WithField("tid", r.Header.Get("X-Request-Id")).
 				Error("Invalid request! See error for details.")
-			writeError("Invalid Request body.", 400, w)
+			writeMessage("Invalid Request body.", 400, w)
 			return
 		}
 
 		tx, err := db.Open()
 		if err != nil {
 			logrus.WithError(err).Error("Failed to connect to mongo")
-			writeError("An internal server error prevented processing of your request.", 500, w)
+			writeMessage("An internal server error prevented processing of your request.", 500, w)
 			return
 		}
 
@@ -42,7 +42,7 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 
 		tx.WriteNotification(notification)
 
-		logrus.WithField("uuid", uuid).WithField("tid", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
+		logrus.WithField("uuid", uuid).WithField("transaction_id", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
 		w.WriteHeader(200)
 	}
 }
@@ -56,7 +56,11 @@ func dumpRequest(r *http.Request) {
 	logrus.Info(string(dump))
 }
 
-func writeError(message string, status int, w http.ResponseWriter) {
+type msg struct {
+	Message string `json:"message"`
+}
+
+func writeMessage(message string, status int, w http.ResponseWriter) {
 	w.WriteHeader(status)
 
 	m := msg{Message: message}

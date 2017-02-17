@@ -37,7 +37,9 @@ func TestAllowsNormalTransactions(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterSyntheticTransactions().Build()(w, req)
+	mockDb := new(MockDB)
+
+	Filter(next).FilterSyntheticTransactions().FilterCarouselPublishes(mockDb).Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	assert.True(t, passed)

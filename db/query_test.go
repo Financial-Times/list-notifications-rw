@@ -60,3 +60,17 @@ func TestQuery(t *testing.T) {
 	data, _ := bson.MarshalJSON(query)
 	assert.True(t, regex.MatchString(string(data)), "Query json should match!")
 }
+
+func TestFindNotificationQuery(t *testing.T) {
+	query := findByTxID("tid_i-am-a-tid")
+
+	data, _ := bson.MarshalJSON(query)
+	assert.Contains(t, string(data), `{"publishReference":"tid_i-am-a-tid"}`, "Query json should match!")
+}
+
+func TestFindNotificationQueryByPartialTXID(t *testing.T) {
+	query := findByPartialTxID("tid_i-am-a-tid")
+
+	data, _ := bson.MarshalJSON(query)
+	assert.Contains(t, string(data), `{"publishReference":{"$regex":"^tid_i-am-a-tid"}}`)
+}

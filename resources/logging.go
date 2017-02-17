@@ -18,7 +18,7 @@ func UpdateLogLevel() func(w http.ResponseWriter, r *http.Request) {
 		err := dec.Decode(&level)
 
 		if err != nil {
-			writeError("Please specify one of [debug, info]", 400, w)
+			writeMessage("Please specify one of [debug, info]", 400, w)
 			return
 		}
 
@@ -32,10 +32,10 @@ func UpdateLogLevel() func(w http.ResponseWriter, r *http.Request) {
 			logrus.Info("Log level updated to info.")
 			break
 		default:
-			writeError("Please specify one of [debug, info]", 400, w)
+			writeMessage("Please specify one of [debug, info]", 400, w)
 			return
 		}
 
-		writeMessage(200, "Log level changed to "+level.Level, w)
+		writeMessage("Log level changed to "+level.Level, 200, w)
 	}
 }

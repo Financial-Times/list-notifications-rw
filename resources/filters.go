@@ -9,6 +9,7 @@ import (
 )
 
 const synthTidPrefix = "SYNTHETIC-REQ-MON"
+
 const tidHeader = "X-Request-Id"
 
 // Filters contains the composed chain
@@ -44,14 +45,14 @@ func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {
-			logrus.WithField("tid", tid).Infof("Rejecting notification; it has no transaction id.")
-			writeError("Rejecting notification; it has no transaction id.", 400, w)
+			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has no transaction id.")
+			writeMessage("Rejecting notification; it has no transaction id.", 400, w)
 			return
 		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
-			logrus.WithField("tid", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
-			writeError("Rejecting notification; it has a synthetic transaction id.", 200, w)
+			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
+			writeMessage("Rejecting notification; it has a synthetic transaction id.", 200, w)
 			return
 		}
 
@@ -64,7 +65,7 @@ func gunzip(next func(w http.ResponseWriter, r *http.Request)) func(w http.Respo
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			unzipped, err := gzip.NewReader(r.Body)
 			if err != nil {
-				writeError(err.Error(), http.StatusBadRequest, w)
+				writeMessage(err.Error(), http.StatusBadRequest, w)
 				return
 			}
 
