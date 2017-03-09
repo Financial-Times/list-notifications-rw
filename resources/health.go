@@ -17,11 +17,11 @@ func GTG(db db.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := pingMongo(db)()
 		if err != nil {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}
 }
 

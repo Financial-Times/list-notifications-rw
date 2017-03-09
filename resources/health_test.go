@@ -24,7 +24,7 @@ func TestHealthy(t *testing.T) {
 
 	Health(mockDb)(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	health := fthealth.HealthResult{}
 	err := json.NewDecoder(w.Body).Decode(&health)
@@ -65,7 +65,7 @@ func TestUnhealthy(t *testing.T) {
 
 	Health(mockDb)(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	health := fthealth.HealthResult{}
 	err := json.NewDecoder(w.Body).Decode(&health)
@@ -106,7 +106,7 @@ func TestWorkingGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	mockDb.AssertExpectations(t)
 	mockTx.AssertExpectations(t)
 }
@@ -124,7 +124,7 @@ func TestFailingGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	assert.Equal(t, 500, w.Code)
+	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
 	mockDb.AssertExpectations(t)
 	mockTx.AssertExpectations(t)
 }
@@ -139,6 +139,6 @@ func TestFailingDBGTG(t *testing.T) {
 
 	GTG(mockDb)(w, req)
 
-	assert.Equal(t, 500, w.Code)
+	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
 	mockDb.AssertExpectations(t)
 }
