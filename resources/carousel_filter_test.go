@@ -36,6 +36,32 @@ func TestCarouselFilter(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
+func TestCarouselFilterWithUnconventionalTransactionID(t *testing.T) {
+	next := func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("Shouldn't reach here!")
+	}
+
+	mockDb := new(MockDB)
+	mockTx := new(MockTX)
+
+	mockDb.On("Open").Return(mockTx, nil)
+	mockTx.On("Close").Return()
+
+	expectedNotification := []model.InternalNotification{{}}
+	mockTx.On("FindNotification", "republish_-10bd337c-66d4-48d9-ab8a-e8441fa2ec98").Return(&expectedNotification, true, nil)
+
+	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
+	req.Header.Add(tidHeader, "republish_-10bd337c-66d4-48d9-ab8a-e8441fa2ec98_carousel_1493606135")
+
+	w := httptest.NewRecorder()
+	Filter(next).FilterCarouselPublishes(mockDb).Build()(w, req)
+
+	mockDb.AssertExpectations(t)
+	mockTx.AssertExpectations(t)
+
+	assert.Equal(t, 200, w.Code)
+}
+
 func TestPartialCarouselFilter(t *testing.T) {
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
