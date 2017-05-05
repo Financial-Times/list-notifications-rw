@@ -10,7 +10,7 @@ import (
 )
 
 var generatedCarouselTidRegex = regexp.MustCompile(`^(tid_[\S]+)_carousel_[\d]{10}_gentx`)
-var carouselTidRegex = regexp.MustCompile(`^(tid_[\S]+)_carousel_[\d]{10}`)
+var carouselTidRegex = regexp.MustCompile(`^(.+)_carousel_[\d]{10}`)
 
 // FilterCarouselPublishes checks whether this is a carousel publish and processes it accordingly
 func (f Filters) FilterCarouselPublishes(db db.DB) Filters {
