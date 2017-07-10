@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }} 
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}" 
+    visualize: "true" 
+    app: {{ .Values.service.name }} 
+spec:
+  replicas: {{ .Values.replicaCount }} 
+  selector: 
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        visualize: "true" 
+    spec:
+      containers: 
+      - name: {{ .Values.service.name }} 
+        image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env: 
+            - name: MONGO_ADDRESSES
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: mongodb.address
+            - name: DUMP_REQUESTS
+              value: "{{ .Values.env.DUMP_REQUESTS }}"
+            - name: API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: api.host
+            - name: CACHE_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: cache-max-age
+        ports: 
+        - containerPort: 8080 
+        livenessProbe: 
+          tcpSocket: 
+            port: 8080 
+          initialDelaySeconds: 5
+        readinessProbe: 
+          httpGet: 
+            path: "/__gtg" 
+            port: 8080 
+          initialDelaySeconds: 20
+          periodSeconds: 30 
+        resources: 
+{{ toYaml .Values.resources | indent 12 }}
