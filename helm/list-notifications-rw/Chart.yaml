@@ -1,0 +1,4 @@
+apiVersion: v1
+description: list-notifications-rw Helm chart for Kubernetes
+name: list-notifications-rw
+version: 0.0.0  # this entry can be left untouched as it is automatically handled by Jenkins pipeline
