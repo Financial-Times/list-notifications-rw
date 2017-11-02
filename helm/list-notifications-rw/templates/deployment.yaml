@@ -27,7 +27,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: global-config
-                  key: mongodb.address
+                  key: mongo.addresses
             - name: DUMP_REQUESTS
               value: "{{ .Values.env.DUMP_REQUESTS }}"
             - name: API_HOST
