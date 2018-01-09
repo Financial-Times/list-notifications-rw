@@ -156,7 +156,7 @@ func server(port string, maxSinceInterval int, dumpRequests bool, healthService 
 	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
-	r.HandleFunc("/__health", healthService.HealthChecks())
+	r.HandleFunc("/__health", healthService.HealthChecksHandler())
 
 	r.HandleFunc("/__log", resources.UpdateLogLevel()).Methods("POST")
 
