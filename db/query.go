@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -59,7 +59,7 @@ func generateQuery(offset int, since time.Time) []bson.M {
 
 	j, err := json.Marshal(pipeline)
 	if err == nil { // Use /__log/debug endpoint to see the full query.
-		logrus.WithField("query", string(j)).Debug("Full query.")
+		log.WithField("query", string(j)).Debug("Full query.")
 	}
 
 	return pipeline

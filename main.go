@@ -3,136 +3,181 @@ package main
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
+	api "github.com/Financial-Times/api-endpoint"
+	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/resources"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	cli "gopkg.in/urfave/cli.v1"
-	"gopkg.in/urfave/cli.v1/altsrc"
+	"github.com/jawher/mow.cli"
+	metrics "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	appDescription = "Provides Notifications for UPP Lists"
 )
 
 func main() {
-	app := cli.NewApp()
-	app.Name = "list-notifications-rw"
-	app.Usage = "R/W for List Notifications"
+	app := cli.App("list-notifications-rw", appDescription)
 
-	flags := []cli.Flag{
-		altsrc.NewStringFlag(cli.StringFlag{
-			Name:   "db",
-			Usage:  "MongoDB database connection string (i.e. comma separated list of ip:port)",
-			EnvVar: "MONGO_ADDRESSES",
-		}),
-		altsrc.NewIntFlag(cli.IntFlag{
-			Name:   "limit",
-			Usage:  "The max number of results for a notifications query.",
-			Value:  200,
-			EnvVar: "NOTIFICATIONS_LIMIT",
-		}),
-		altsrc.NewIntFlag(cli.IntFlag{
-			Name:   "port",
-			Usage:  "The port number to run on.",
-			Value:  8080,
-			EnvVar: "PORT",
-		}),
-		altsrc.NewIntFlag(cli.IntFlag{
-			Name:   "cache-max-age",
-			Usage:  "The max age for content records in varnish in seconds.",
-			Value:  10,
-			EnvVar: "CACHE_TTL",
-		}),
-		altsrc.NewIntFlag(cli.IntFlag{
-			Name:   "max-since-interval",
-			Usage:  "The maximum time interval clients are allowed to query for notifications in days.",
-			Value:  90,
-			EnvVar: "MAX_SINCE_INTERVAL",
-		}),
-		altsrc.NewStringFlag(cli.StringFlag{
-			Name:   "api-host",
-			Usage:  "Api host to use for read responses.",
-			Value:  "api.ft.com",
-			EnvVar: "API_HOST",
-		}),
-		altsrc.NewIntFlag(cli.IntFlag{
-			Name:   "db-connect-timeout",
-			Usage:  "Timeout in milliseconds for the initial database connection.",
-			Value:  3800,
-			EnvVar: "DB_CONNECTION_TIMEOUT",
-		}),
-		altsrc.NewBoolFlag(cli.BoolFlag{
-			Name:   "dump-requests",
-			Usage:  "Logs every write request in full HTTP/1.1 spec.",
-			EnvVar: "DUMP_REQUESTS",
-		}),
-		cli.StringFlag{
-			Name:  "config",
-			Value: "./config.yml",
-			Usage: "Path to the YAML config file.",
-		},
-	}
+	appSystemCode := app.String(cli.StringOpt{
+		Name:   "app-system-code",
+		Value:  "upp-list-notifications-rw",
+		Desc:   "System Code of the application",
+		EnvVar: "APP_SYSTEM_CODE",
+	})
 
-	app.Version = version()
-	app.Before = altsrc.InitInputSourceWithContext(flags, altsrc.NewYamlSourceFromFlagFunc("config"))
-	app.Flags = flags
+	appName := app.String(cli.StringOpt{
+		Name:   "app-name",
+		Value:  "list-notifications-rw",
+		Desc:   "Application name",
+		EnvVar: "APP_NAME",
+	})
 
-	app.Action = func(ctx *cli.Context) error {
-		logrus.Info("Initialising MongoDB.")
+	port := app.String(cli.StringOpt{
+		Name:   "port",
+		Value:  "8080",
+		Desc:   "Port to listen on",
+		EnvVar: "APP_PORT",
+	})
+
+	dumpRequests := app.Bool(cli.BoolOpt{
+		Name:   "dump-requests",
+		Desc:   "Logs every write request in full HTTP/1.1 spec.",
+		Value:  false,
+		EnvVar: "DUMP_REQUESTS",
+	})
+
+	apiHost := app.String(cli.StringOpt{
+		Name:   "api-host",
+		Desc:   "Api host to use for read responses.",
+		Value:  "api.ft.com",
+		EnvVar: "API_HOST",
+	})
+
+	mongoConnectionTimeout := app.Int(cli.IntOpt{
+		Name:   "db-connect-timeout",
+		Desc:   "Timeout in milliseconds for the initial database connection.",
+		Value:  3000,
+		EnvVar: "DB_CONNECTION_TIMEOUT",
+	})
+
+	maxSinceInterval := app.Int(cli.IntOpt{
+		Name:   "max-since-interval",
+		Desc:   "The maximum time interval clients are allowed to query for notifications in days.",
+		Value:  90,
+		EnvVar: "MAX_SINCE_INTERVAL",
+	})
+
+	cacheMaxAge := app.Int(cli.IntOpt{
+		Name:   "cache-max-age",
+		Desc:   "The max age for content records in varnish in seconds.",
+		Value:  10,
+		EnvVar: "CACHE_TTL",
+	})
+
+	limit := app.Int(cli.IntOpt{
+		Name:   "limit",
+		Desc:   "The max number of results for a notifications query.",
+		Value:  200,
+		EnvVar: "NOTIFICATIONS_LIMIT",
+	})
+
+	mongoConnection := app.String(cli.StringOpt{
+		Name:   "db",
+		Desc:   "MongoDB database connection string (i.e. comma separated list of ip:port)",
+		Value:  "localhost:27017",
+		EnvVar: "MONGO_ADDRESSES",
+	})
+
+	apiYml := app.String(cli.StringOpt{
+		Name:   "api-yml",
+		Value:  "./api.yml",
+		Desc:   "Location of the API Swagger YML file.",
+		EnvVar: "API_YML",
+	})
+
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.InfoLevel)
+	log.Infof("[Startup] %v is starting", *appSystemCode)
+
+	app.Action = func() {
+		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
+
+		log.Info("Initialising MongoDB.")
 		mongo := &db.MongoDB{
-			Urls:       ctx.String("db"),
-			Timeout:    ctx.Int("db-connect-timeout"),
-			MaxLimit:   ctx.Int("limit"),
-			CacheDelay: ctx.Int("cache-max-age"),
+			Urls:       *mongoConnection,
+			Timeout:    *mongoConnectionTimeout,
+			MaxLimit:   *limit,
+			CacheDelay: *cacheMaxAge,
 		}
 
 		defer mongo.Close()
 
-		logrus.Info("Opening initial connection to Mongo.")
+		log.Info("Opening initial connection to Mongo.")
 		tx, err := mongo.Open()
 		if err != nil {
-			return err
+			log.WithError(err).Error("Failed to connect to Mongo!")
+			return
 		}
 
-		logrus.Info("Ensuring Mongo indices are setup...")
+		log.Info("Ensuring Mongo indices are setup...")
 		err = tx.EnsureIndices()
 		if err != nil {
-			return err
+			log.WithError(err).Error("Failed to ensure mongo indices!")
+			return
 		}
+		log.Info("Finished ensuring indices.")
 
-		logrus.Info("Finished ensuring indices.")
 		tx.Close()
 
-		mapper := mapping.DefaultMapper{ApiHost: ctx.String("api-host")}
+		mapper := mapping.DefaultMapper{ApiHost: *apiHost}
 
 		nextLink := mapping.OffsetNextLink{
-			ApiHost:    ctx.String("api-host"),
-			CacheDelay: ctx.Int("cache-max-age"),
-			MaxLimit:   ctx.Int("limit"),
+			ApiHost:    *apiHost,
+			CacheDelay: *cacheMaxAge,
+			MaxLimit:   *limit,
 		}
 
-		server(ctx.Int("port"), ctx.Int("max-since-interval"), ctx.Bool("dump-requests"), mapper, nextLink, mongo)
-		return nil
+		healthService := resources.NewHealthService(mongo, *appSystemCode, *appName, appDescription)
+
+		server(apiYml, *port, *maxSinceInterval, *dumpRequests, healthService, mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
 }
 
-func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func server(apiYml *string, port string, maxSinceInterval int, dumpRequests bool, healthService *resources.HealthService, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
 	r := mux.NewRouter()
+
+	var monitoringRouter http.Handler = r
+
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+
+	if apiYml != nil {
+		apiEndpoint, err := api.NewAPIEndpointForFile(*apiYml)
+		if err != nil {
+			log.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the OpenAPI YML and the file location")
+		} else {
+			r.Handle(api.DefaultPath, apiEndpoint)
+		}
+	}
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
 
 	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
-	r.HandleFunc("/__health", resources.Health(db))
+	r.HandleFunc("/__health", healthService.HealthChecksHandler())
 
 	r.HandleFunc("/__log", resources.UpdateLogLevel()).Methods("POST")
 
-	r.HandleFunc(status.GTGPath, resources.GTG(db))
+	r.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.GTG))
 
 	r.HandleFunc(status.PingPath, status.PingHandler)
 	r.HandleFunc(status.PingPathDW, status.PingHandler)
@@ -140,23 +185,15 @@ func server(port int, maxSinceInterval int, dumpRequests bool, mapper mapping.No
 	r.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
 	r.HandleFunc(status.BuildInfoPathDW, status.BuildInfoHandler)
 
-	addr := ":" + strconv.Itoa(port)
+	addr := ":" + port
 	server := &http.Server{
-		Handler: r,
+		Handler: monitoringRouter,
 		Addr:    addr,
 
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logrus.Info("Starting server on " + addr)
+	log.Info("Starting server on " + addr)
 	server.ListenAndServe()
-}
-
-func version() string {
-	v := os.Getenv("app_version") // set in service file
-	if v == "" {
-		v = "v0.0.0"
-	}
-	return v
 }

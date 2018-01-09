@@ -2,36 +2,48 @@ package resources
 
 import (
 	"net/http"
+	"time"
 
-	fthealth "github.com/Financial-Times/go-fthealth/v1a"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/list-notifications-rw/db"
+	"github.com/Financial-Times/service-status-go/gtg"
 )
 
 const (
-	contentType      = "Content-Type"
-	plainText        = "text/plain; charset=US-ASCII"
-	cacheControl     = "Cache-control"
-	noCache          = "no-cache"
+	contentType  = "Content-Type"
+	plainText    = "text/plain; charset=US-ASCII"
+	cacheControl = "Cache-control"
+	noCache      = "no-cache"
 )
 
-// Health returns a handler for the standard FT healthchecks
-func Health(db db.DB) func(w http.ResponseWriter, r *http.Request) {
-	return fthealth.Handler("list-notifications-rw", "Notifies clients of updates to UPP Lists.", getHealthchecks(db)[0])
+type HealthService struct {
+	fthealth.TimedHealthCheck
 }
 
-// GTG returns a handler for a standard GTG endpoint.
-func GTG(db db.DB) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set(contentType, plainText)
-		w.Header().Set(cacheControl, noCache)
-		_, err := pingMongo(db)()
-		if err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
+func NewHealthService(db db.DB, appSystemCode string, appName string, appDescription string) *HealthService {
+	hcService := &HealthService{}
+	hcService.SystemCode = appSystemCode
+	hcService.Name = appName
+	hcService.Description = appDescription
+	hcService.Timeout = 10 * time.Second
+	hcService.Checks = getHealthchecks(db)
 
-		w.WriteHeader(http.StatusOK)
+	return hcService
+}
+
+// HealthChecks returns a handler for the standard FT healthchecks
+func (service *HealthService) HealthChecksHandler() func(w http.ResponseWriter, r *http.Request) {
+	return fthealth.Handler(service)
+}
+
+// GTG lightly tests the service and returns an FT standard GTG response
+func (service *HealthService) GTG() gtg.Status {
+	for _, check := range service.Checks {
+		if _, err := check.Checker(); err != nil {
+			return gtg.Status{GoodToGo: false, Message: err.Error()}
+		}
 	}
+	return gtg.Status{GoodToGo: true}
 }
 
 func getHealthchecks(db db.DB) []fthealth.Check {

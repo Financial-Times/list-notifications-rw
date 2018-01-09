@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const synthTidPrefix = "SYNTHETIC-REQ-MON"
@@ -45,13 +45,13 @@ func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {
-			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has no transaction id.")
+			log.WithField("transaction_id", tid).Infof("Rejecting notification; it has no transaction id.")
 			writeMessage("Rejecting notification; it has no transaction id.", 400, w)
 			return
 		}
 
 		if strings.HasPrefix(strings.ToUpper(tid), synthTidPrefix) {
-			logrus.WithField("transaction_id", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
+			log.WithField("transaction_id", tid).Infof("Rejecting notification; it has a synthetic transaction id.")
 			writeMessage("Rejecting notification; it has a synthetic transaction id.", 200, w)
 			return
 		}

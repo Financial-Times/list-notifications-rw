@@ -1,31 +1,33 @@
-FROM alpine:3.4
+FROM golang:1.8-alpine
 
-COPY . /source/
+ENV PROJECT=list-notifications-rw
+COPY . /${PROJECT}-sources/
 
-RUN apk add --update bash \
-  && ls -lta /source/ \
-  && apk --update add git go ca-certificates \
-  && cd /source/ \
-  && BUILDINFO_PACKAGE="github.com/Financial-Times/service-status-go/buildinfo." \
+RUN apk --no-cache --virtual .build-dependencies add git \
+  && ORG_PATH="github.com/Financial-Times" \
+  && REPO_PATH="${ORG_PATH}/${PROJECT}" \
+  && mkdir -p $GOPATH/src/${ORG_PATH} \
+  # Linking the project sources in the GOPATH folder
+  && ln -s /${PROJECT}-sources $GOPATH/src/${REPO_PATH} \
+  && cd $GOPATH/src/${REPO_PATH} \
+  && BUILDINFO_PACKAGE="${ORG_PATH}/${PROJECT}/vendor/${ORG_PATH}/service-status-go/buildinfo." \
   && VERSION="version=$(git describe --tag --always 2> /dev/null)" \
   && DATETIME="dateTime=$(date -u +%Y%m%d%H%M%S)" \
   && REPOSITORY="repository=$(git config --get remote.origin.url)" \
   && REVISION="revision=$(git rev-parse HEAD)" \
   && BUILDER="builder=$(go version)" \
   && LDFLAGS="-X '"${BUILDINFO_PACKAGE}$VERSION"' -X '"${BUILDINFO_PACKAGE}$DATETIME"' -X '"${BUILDINFO_PACKAGE}$REPOSITORY"' -X '"${BUILDINFO_PACKAGE}$REVISION"' -X '"${BUILDINFO_PACKAGE}$BUILDER"'" \
-  && cd - \
-  && export GOPATH=/gopath \
-  && REPO_PATH="github.com/Financial-Times/list-notifications-rw/" \
-  && mkdir -p $GOPATH/src/${REPO_PATH} \
-  && cp -r /source/* $GOPATH/src/${REPO_PATH} \
-  && cd $GOPATH/src/${REPO_PATH} \
-  && echo $LDFLAGS \
-  && go get ./... \
+  && echo "Build flags: $LDFLAGS" \
+  && echo "Fetching dependencies..." \
+  && go get -u github.com/kardianos/govendor \
+  && $GOPATH/bin/govendor sync \
   && go build -ldflags="${LDFLAGS}" \
-  && mv ./list-notifications-rw / \
-  && touch /config.yml \
-  && apk del go git \
+  && mv ${PROJECT} /${PROJECT} \
+  && mv ./api/api.yml / \
+  && apk del .build-dependencies \
   && rm -rf $GOPATH /var/cache/apk/*
+
+WORKDIR /
 
 EXPOSE 8080
 
