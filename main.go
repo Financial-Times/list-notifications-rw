@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	api "github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
@@ -93,6 +94,13 @@ func main() {
 		EnvVar: "MONGO_ADDRESSES",
 	})
 
+	apiYml := app.String(cli.StringOpt{
+		Name:   "api-yml",
+		Value:  "./api.yml",
+		Desc:   "Location of the API Swagger YML file.",
+		EnvVar: "API_YML",
+	})
+
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 	log.Infof("[Startup] %v is starting", *appSystemCode)
@@ -137,19 +145,28 @@ func main() {
 
 		healthService := resources.NewHealthService(mongo, *appSystemCode, *appName, appDescription)
 
-		server(*port, *maxSinceInterval, *dumpRequests, healthService, mapper, nextLink, mongo)
+		server(apiYml, *port, *maxSinceInterval, *dumpRequests, healthService, mapper, nextLink, mongo)
 	}
 
 	app.Run(os.Args)
 }
 
-func server(port string, maxSinceInterval int, dumpRequests bool, healthService *resources.HealthService, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func server(apiYml *string, port string, maxSinceInterval int, dumpRequests bool, healthService *resources.HealthService, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
 	r := mux.NewRouter()
 
 	var monitoringRouter http.Handler = r
 
 	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+
+	if apiYml != nil {
+		apiEndpoint, err := api.NewAPIEndpointForFile(*apiYml)
+		if err != nil {
+			log.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the OpenAPI YML and the file location")
+		} else {
+			r.Handle(api.DefaultPath, apiEndpoint)
+		}
+	}
 
 	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
 
