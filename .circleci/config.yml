@@ -6,6 +6,7 @@ jobs:
       - image: golang:1.8.3
         environment:
           GOPATH: /go
+          MONGO_TEST_URL: localhost:27017
           CIRCLE_TEST_REPORTS: /tmp/test-results
           CIRCLE_COVERAGE_REPORT: /tmp/coverage-results
       - image: mongo:3.2.18
