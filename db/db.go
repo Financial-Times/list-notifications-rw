@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/Financial-Times/list-notifications-rw/model"
-	"github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -29,7 +29,7 @@ func (db *MongoDB) Open() (TX, error) {
 		cacheDelay = db.CacheDelay
 
 		if connections > expectedConnections {
-			logrus.Warnf("There are more MongoDB connections opened than expected! Are you sure this is what you want? Open connections: %v, expected %v.", connections, expectedConnections)
+			log.Warnf("There are more MongoDB connections opened than expected! Are you sure this is what you want? Open connections: %v, expected %v.", connections, expectedConnections)
 		}
 	}
 

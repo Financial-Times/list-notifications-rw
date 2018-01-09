@@ -7,7 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Financial-Times/go-fthealth"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,8 @@ func TestHealthy(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	Health(mockDb)(w, req)
+	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -63,7 +65,8 @@ func TestUnhealthy(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	Health(mockDb)(w, req)
+	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -104,7 +107,8 @@ func TestWorkingGTG(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	GTG(mockDb)(w, req)
+	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	mockDb.AssertExpectations(t)
@@ -122,7 +126,8 @@ func TestFailingGTG(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	GTG(mockDb)(w, req)
+	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
 	mockDb.AssertExpectations(t)
@@ -137,7 +142,8 @@ func TestFailingDBGTG(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	GTG(mockDb)(w, req)
+	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
 	mockDb.AssertExpectations(t)

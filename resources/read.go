@@ -10,7 +10,7 @@ import (
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
-	"github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // ReadNotifications reads notifications from the backing db
@@ -18,19 +18,19 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {
-			logrus.Info("User didn't provide since date.")
+			log.Info("User didn't provide since date.")
 			writeMessage(sinceMessage(), 400, w)
 			return
 		}
 
 		since, err := time.Parse(time.RFC3339Nano, param)
 		if err != nil {
-			logrus.WithError(err).WithField("since", param).Info("Failed to parse user provided since date.")
+			log.WithError(err).WithField("since", param).Info("Failed to parse user provided since date.")
 			writeMessage(sinceMessage(), 400, w)
 			return
 		}
 		if since.Before(time.Now().UTC().AddDate(0, 0, -maxSinceInterval)) {
-			logrus.Infof("User provided since date before query cap date, since= [%v].", since.Format(time.RFC3339Nano))
+			log.Infof("User provided since date before query cap date, since= [%v].", since.Format(time.RFC3339Nano))
 			writeMessage(fmt.Sprintf("Since date must be within the last %d days.", maxSinceInterval), 400, w)
 			return
 		}
@@ -38,14 +38,14 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		offset, err := getOffset(r)
 
 		if err != nil {
-			logrus.WithError(err).Info("User provided offset is not an integer!")
+			log.WithError(err).Info("User provided offset is not an integer!")
 			writeMessage("Please specify an integer offset.", 400, w)
 			return
 		}
 
 		tx, err := db.Open()
 		if err != nil {
-			logrus.WithError(err).Error("Failed to connect to mongo")
+			log.WithError(err).Error("Failed to connect to mongo")
 			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
 			return
 		}
@@ -54,7 +54,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 
 		notifications, err := tx.ReadNotifications(offset, since)
 		if err != nil {
-			logrus.WithError(err).Error("Failed to query mongo for notifications!")
+			log.WithError(err).Error("Failed to query mongo for notifications!")
 			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
 			return
 		}

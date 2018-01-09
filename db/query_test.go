@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/mgo.v2/bson"
 )
 
 func init() {
-	logrus.SetLevel(logrus.DebugLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func TestShiftSince(t *testing.T) {

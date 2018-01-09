@@ -7,9 +7,9 @@ service:
 replicaCount: 2
 image:
   repository: coco/list-notifications-rw
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 resources:
   limits:
-    memory: 128Mi
+    memory: 32Mi
 env:
   DUMP_REQUESTS: false
