@@ -172,6 +172,7 @@ func server(apiYml *string, port string, maxSinceInterval int, dumpRequests bool
 
 	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
+	r.HandleFunc("/generic-lists/{uuid}", write).Methods("PUT")
 
 	r.HandleFunc("/__health", healthService.HealthChecksHandler())
 
