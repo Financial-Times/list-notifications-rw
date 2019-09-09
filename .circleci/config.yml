@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /go/src/github.com/Financial-Times/list-notifications-rw
     docker:
-      - image: golang:1.8.3
+      - image: golang:1
         environment:
           GOPATH: /go
           MONGO_TEST_URL: localhost:27017
