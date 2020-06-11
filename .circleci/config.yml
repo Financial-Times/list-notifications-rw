@@ -1,4 +1,6 @@
-version: 2
+version: 2.1
+orbs:
+  ft-golang-ci: financial-times/golang-ci@1
 jobs:
   build:
     working_directory: /go/src/github.com/Financial-Times/list-notifications-rw
@@ -12,49 +14,20 @@ jobs:
       - image: mongo:3.2.18
     steps:
       - checkout
-      - run:
-          name: External Dependencies
-          command: |
-            go get -u github.com/mattn/goveralls
-            go get -u github.com/jstemmer/go-junit-report
-            go get -u github.com/kardianos/govendor
-            go get -u github.com/haya14busa/goverage
-      - run:
-          name: Test Results
-          command: |
-            mkdir -p ${CIRCLE_TEST_REPORTS}
-            mkdir -p ${CIRCLE_COVERAGE_REPORT}
-      - run:
-          name: Govendor Sync
-          command: govendor sync -v
-      - run:
-          name: Go Build
-          command: go build -v
-      - run:
-          name: Run Tests
-          command: |
-            govendor test -race -v +local | /go/bin/go-junit-report > ${CIRCLE_TEST_REPORTS}/main.xml
-            goverage -covermode=atomic -race -coverprofile=${CIRCLE_COVERAGE_REPORT}/coverage.out ./...
-      - run:
-          name: Upload Coverage
-          command: /go/bin/goveralls -coverprofile=${CIRCLE_COVERAGE_REPORT}/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-      - store_test_results:
-          path: /tmp/test-results
-  dockerfile:
-    working_directory: /list-notifications-rw
-    docker:
-      - image: docker:1.12.6-git
-    steps:
-      - checkout
-      - setup_docker_engine
-      - run:
-          name: Build Dockerfile
-          command: docker build .
+      - ft-golang-ci/build
+      - ft-golang-ci/lint
+      - ft-golang-ci/test
+
 workflows:
-  version: 2
   test-and-build-docker:
     jobs:
       - build
-      - dockerfile:
+      - ft-golang-ci/docker-build:
+          name: build-docker-image
           requires:
             - build
+  snyk-scanning:
+    jobs:
+      - ft-golang-ci/scan:
+          name: scan-dependencies
+          context: cm-team-snyk
