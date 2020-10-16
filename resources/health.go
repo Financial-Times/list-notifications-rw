@@ -53,7 +53,7 @@ func getHealthchecks(db db.DB) []fthealth.Check {
 			BusinessImpact:   "Notifications for list changes will not be available to API consumers (NextFT).",
 			TechnicalSummary: "The service is unable to connect to MongoDB. Notifications cannot be written to or read from the store.",
 			Severity:         1,
-			PanicGuide:       "https://dewey.ft.com/upp-list-notifications-rw.html",
+			PanicGuide:       "https://runbooks.ftops.tech/upp-list-notifications-rw",
 			Checker:          pingMongo(db),
 		},
 	}
