@@ -2,6 +2,5 @@
 replicaCount: 2
 service:
   name: list-notifications-rw
-eksCluster: true
 env:
   DUMP_REQUESTS: false
