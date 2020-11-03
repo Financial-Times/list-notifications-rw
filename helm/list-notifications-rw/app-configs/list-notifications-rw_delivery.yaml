@@ -1,6 +1,0 @@
-# Values used for the deployed application.
-replicaCount: 2
-service:
-  name: list-notifications-rw
-env:
-  DUMP_REQUESTS: false
