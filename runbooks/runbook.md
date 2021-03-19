@@ -1,10 +1,18 @@
+<!--
+    Written in the format prescribed by https://github.com/Financial-Times/runbook.md.
+    Any future edits should abide by this format.
+-->
 # UPP - List Notifications RW
 
 This service is responsible for writing/reading change events for every list publish to/from a Mongo document store. This API is used to discover list updates.
 
+## Code
+
+upp-list-notifications-rw
+
 ## Primary URL
 
-<https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/>
+https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/
 
 ## Service Tier
 
@@ -13,27 +21,6 @@ Platinum
 ## Lifecycle Stage
 
 Production
-
-## Delivered By
-
-content
-
-## Supported By
-
-content
-
-## Known About By
-
-- hristo.georgiev
-- robert.marinov
-- elina.kaneva
-- georgi.ivanov
-- tsvetan.dimitrov
-- kalin.arsov
-- mihail.mihaylov
-- boyko.boykov
-- donislav.belev
-- dimitar.terziev
 
 ## Host Platform
 
@@ -51,9 +38,19 @@ No
 
 No
 
-## Dependencies
+<!-- Placeholder - remove HTML comment markers to activate
+## Can Download Personal Data
+Choose Yes or No
 
-- upp-mongodb
+...or delete this placeholder if not applicable to this system
+-->
+
+<!-- Placeholder - remove HTML comment markers to activate
+## Can Contact Individuals
+Choose Yes or No
+
+...or delete this placeholder if not applicable to this system
+-->
 
 ## Failover Architecture Type
 
@@ -93,6 +90,14 @@ Manual
 Manual failover is needed when a new version of the service is deployed to production.
 For more details about the failover process please see: <https://github.com/Financial-Times/upp-docs/tree/master/failover-guides/delivery-cluster>
 
+<!-- Placeholder - remove HTML comment markers to activate
+## Heroku Pipeline Name
+Enter descriptive text satisfying the following:
+This is the name of the Heroku pipeline for this system. If you don't have a pipeline, this is the name of the app in Heroku. A pipeline is a group of Heroku apps that share the same codebase where each app in a pipeline represents the different stages in a continuous delivery workflow, i.e. staging, production.
+
+...or delete this placeholder if not applicable to this system
+-->
+
 ## Key Management Process Type
 
 Manual
@@ -106,8 +111,8 @@ To rotate credentials you need to login to a particular cluster and update varni
 
 Service in UPP K8S delivery clusters:
 
-- Delivery-Prod-EU health: <https://upp-prod-delivery-eu.upp.ft.com/__health/__pods-health?service-name=list-notifications-rw>
-- Delivery-Prod-US health: <https://upp-prod-delivery-us.upp.ft.com/__health/__pods-health?service-name=list-notifications-rw>
+*   Delivery-Prod-EU health: <https://upp-prod-delivery-eu.upp.ft.com/__health/__pods-health?service-name=list-notifications-rw>
+*   Delivery-Prod-US health: <https://upp-prod-delivery-us.upp.ft.com/__health/__pods-health?service-name=list-notifications-rw>
 
 ## First Line Troubleshooting
 
