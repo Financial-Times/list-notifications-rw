@@ -1,20 +1,28 @@
 openapi: 3.0.0
 info:
   title: List Notifications R/W
-  description: Writes new List Notifications, and offers a Read API
+  description: 'Writes new List Notifications, and offers a Read API'
   version: v0.2.6
   contact:
     name: Universal Publishing
     email: Universal.Publishing.Platform@ft.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
-
+    url: 'https://opensource.org/licenses/MIT'
+servers:
+  - url: 'https://api.ft.com/'
+  - url: 'https://api-t.ft.com/'
+security:
+  - ApiKeyAuth: []
 paths:
   /lists/notifications:
     get:
       summary: Read List Notifications
-      description: Displays a single page of notifications since the date provided, with a maximum of 50 notifications per page. After your initial request, the link with `rel` property `next` (from the `links` object) **must** be used for your subsequent request, or you could miss notifications.
+      description: >-
+        Displays a single page of notifications since the date provided, with a
+        maximum of 50 notifications per page. After your initial request, the
+        link with `rel` property `next` (from the `links` object) **must** be
+        used for your subsequent request, or you could miss notifications.
       tags:
         - Public API
       parameters:
@@ -22,39 +30,49 @@ paths:
           in: query
           required: true
           description: Only show notifications after this date.
-          x-example: "2018-01-15T11:16:33.403976795Z"
+          x-example: '2018-01-15T11:16:33.403976795Z'
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: Shows a single page of notifications.
           content:
             application/json:
               example:
-                requestUrl: "http://api.ft.com/lists/notifications?since=2016-11-19T16:10:57.398Z"
+                requestUrl: >-
+                  http://api.ft.com/lists/notifications?since=2016-11-19T16:10:57.398Z
                 notifications:
-                  - type: "http://www.ft.com/thing/ThingChangeType/UPDATE"
-                    id: "http://api.ft.com/things/b220c4a0-b511-11e6-ba85-95d1533d9a62"
-                    apiUrl: "http://api.ft.com/lists/b220c4a0-b511-11e6-ba85-95d1533d9a62"
-                    title: "Investing in Turkey Top Stories"
-                    publishReference: "tid_plwbovtcqv"
-                    lastModified: "2016-11-29T03:59:35.999Z"
+                  - type: 'http://www.ft.com/thing/ThingChangeType/UPDATE'
+                    id: >-
+                      http://api.ft.com/things/b220c4a0-b511-11e6-ba85-95d1533d9a62
+                    apiUrl: >-
+                      http://api.ft.com/lists/b220c4a0-b511-11e6-ba85-95d1533d9a62
+                    title: Investing in Turkey Top Stories
+                    publishReference: tid_plwbovtcqv
+                    lastModified: '2016-11-29T03:59:35.999Z'
                     links:
-                      - href: "http://api.ft.com/lists/notifications?since=2017-01-16T10%3A54%3A50.655Z"
+                      - href: >-
+                          http://api.ft.com/lists/notifications?since=2017-01-16T10%3A54%3A50.655Z
                         rel: next
-        400:
-          description: A validation error has occurred, please see the error message for more details.
+        '400':
+          description: >-
+            A validation error has occurred, please see the error message for
+            more details.
           content:
             application/json:
               example:
                 message: User didn't provide since date.
-        500:
-          description: We failed to read data from our underlying database, or another unexpected internal server error occurred.
+        '500':
+          description: >-
+            We failed to read data from our underlying database, or another
+            unexpected internal server error occurred.
           content:
             application/json:
               example:
-                message: Failed to retrieve list notifications due to internal server error.
-  /lists/{uuid}:
+                message: >-
+                  Failed to retrieve list notifications due to internal server
+                  error.
+  '/lists/{uuid}':
     put:
       summary: Write new List Notifications
       description: FOR INTERNAL USE ONLY!
@@ -76,101 +94,158 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: The List notification has been written successfully.
-        400:
-          description: The request body did not pass validation. This can be caused by malformed json, invalid uuids, or if the uuid in the url path did not match the uuid present in the List body.
+        '400':
+          description: >-
+            The request body did not pass validation. This can be caused by
+            malformed json, invalid uuids, or if the uuid in the url path did
+            not match the uuid present in the List body.
           content:
             application/json:
               example:
                 message: Invalid Request body.
-        500:
-          description: We failed to write data to our underlying database, or another unexpected internal server error occurred.
+        '500':
+          description: >-
+            We failed to write data to our underlying database, or another
+            unexpected internal server error occurred.
           content:
             application/json:
               example:
                 message: An internal server error prevented processing of your request.
   /__ping:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     get:
+      security:
+        - BasicAuth: []
       summary: Ping
       description: Returns "pong" if the server is running.
       tags:
         - Health
       responses:
-        200:
+        '200':
           description: We return pong in plaintext only.
           content:
             text/plain; charset=utf-8:
               example: pong
   /__health:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     get:
+      security:
+        - BasicAuth: []
       summary: Healthchecks
-      description: Runs application healthchecks and returns FT Healthcheck style
-        json.
+      description: Runs application healthchecks and returns FT Healthcheck style json.
+      tags:
+        - Health
       responses:
-        200:
-          description: Should always return 200 along with the output of the healthchecks
-            - regardless of whether the healthchecks failed or not. Please inspect
-            the overall `ok` property to see whether or not the application is healthy.
+        '200':
+          description: >-
+            Should always return 200 along with the output of the healthchecks -
+            regardless of whether the healthchecks failed or not. Please inspect
+            the overall `ok` property to see whether or not the application is
+            healthy.
   /__build-info:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     get:
+      security:
+        - BasicAuth: []
       summary: Build Information
-      description: Returns application build info, such as the git repository and
-        revision, the golang version it was built with, and the app release version.
+      description: >-
+        Returns application build info, such as the git repository and revision,
+        the golang version it was built with, and the app release version.
+      tags:
+        - Info
       responses:
-        200:
+        '200':
           description: Outputs build information as described in the summary.
           content:
             application/json; charset=UTF-8:
               example:
-                version: "v0.2.6"
-                repository: "https://github.com/Financial-Times/list-notifications-rw.git"
-                revision: "0a635debf9b0510ec08579d848394f199ea571f1"
-                builder: "go version go1.15.4 linux/amd64"
-                dateTime: "20201112134640"
+                version: v0.2.6
+                repository: 'https://github.com/Financial-Times/list-notifications-rw.git'
+                revision: 0a635debf9b0510ec08579d848394f199ea571f1
+                builder: go version go1.15.4 linux/amd64
+                dateTime: '20201112134640'
   /__gtg:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     get:
+      security:
+        - BasicAuth: []
       summary: Good To Go
-      description: Lightly healthchecks the application, and returns a 200 if it's
+      description: >-
+        Lightly healthchecks the application, and returns a 200 if it's
         Good-To-Go.
+      tags:
+        - Health
       responses:
-        200:
-          description: The application is healthy enough to perform all its functions
+        '200':
+          description: >-
+            The application is healthy enough to perform all its functions
             correctly - i.e. good to go.
-          content: { }
-        503:
-          description: One or more of the applications healthchecks have failed, so
-            please do not use the app. See the /__health endpoint for more detailed
+          content: {}
+        '503':
+          description: >-
+            One or more of the applications healthchecks have failed, so please
+            do not use the app. See the /__health endpoint for more detailed
             information.
   /__log:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     post:
+      security:
+        - BasicAuth: []
       summary: Logging Control
       description: Updates the log level for the application.
       tags:
         - Debugging
       responses:
-        200:
+        '200':
           description: The log level has been updated as required.
           content:
             application/json:
               example:
                 message: Log level changed to debug
-        400:
-          description: The level can only be "info" or "debug", all other levels (including junk text) will be ignored.
+        '400':
+          description: >-
+            The level can only be "info" or "debug", all other levels (including
+            junk text) will be ignored.
           content:
             application/json:
               example:
-                message: Please specify one of [debug, info]
+                message: 'Please specify one of [debug, info]'
   /__api:
+    servers:
+      - url: 'https://upp-prod-delivery-glb.upp.ft.com/__list-notifications-rw/'
+      - url: 'https://upp-staging-delivery-glb.upp.ft.com/__list-notifications-rw/'
     get:
+      security:
+        - BasicAuth: []
       summary: API Documentation
       description: Returns OpenAPI documentation for the application.
       tags:
         - Info
       responses:
-        "200":
+        '200':
           description: Returns OpenAPI information.
           content:
             text/plain;charset=utf-8:
               schema:
                 type: string
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    BasicAuth:
+      type: http
+      scheme: basic
