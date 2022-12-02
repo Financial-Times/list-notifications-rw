@@ -24,7 +24,7 @@ go test -v -race ./...
 
 ## Running Locally
 
-The `list-notifications-rw` requires a running MongoDB instance to connect to. Update the [config.yml](/config.yml) `db` field to point to your Mongo instance. To run, simply build and run:
+The `list-notifications-rw` requires a running MongoDB instance to connect to. Update the environment variable `MONGO_ADDRESSES` field to point to your Mongo instance. To run, simply build and run:
 
 ```
 ./list-notifications-rw
@@ -32,7 +32,7 @@ The `list-notifications-rw` requires a running MongoDB instance to connect to. U
 
 **N.B.** This assumes your config.yml is in your working directory.
 
-The default port is `8080`, but can be configured in the [config.yml](/config.yml).
+The default port is `8080`, but can be configured in the environment variables.
 
 ## API
 
