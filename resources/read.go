@@ -49,7 +49,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 
 		notifications, err := reader.ReadNotifications(offset, since)
 		if err != nil {
-			log.WithError(err).Error("Failed to query mongo for notifications!")
+			log.WithError(err).Error("Failed to query database for notifications!")
 			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
 			return
 		}
