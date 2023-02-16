@@ -2,11 +2,11 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
+	"github.com/Financial-Times/upp-go-sdk/pkg/documentdb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,6 +15,8 @@ import (
 type Client struct {
 	database   string
 	collection string
+	username   string
+	password   string
 	maxLimit   int
 	cacheDelay int
 	client     *mongo.Client
@@ -22,20 +24,23 @@ type Client struct {
 }
 
 // NewClient creates new client instance
-func NewClient(address, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
-	uri := fmt.Sprintf("mongodb://%s", address)
-	opts := options.Client().ApplyURI(uri)
-
+func NewClient(address, username, password, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, opts)
+	client, err := documentdb.NewClient(ctx, documentdb.ConnectionParams{
+		Host:     address,
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
 		client:     client,
+		username:   username,
+		password:   password,
 		database:   database,
 		collection: collection,
 		cacheDelay: cacheDelay,

@@ -33,11 +33,27 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
-          - name: MONGO_ADDRESSES
+          - name: LOG_LEVEL
+            value: "{{ .Values.env.LOG_LEVEL }}"
+          - name: DB_NAME
+            value: "{{ .Values.env.DB_NAME }}"
+          - name: DB_COLLECTION
+            value: "{{ .Values.env.DB_COLLECTION }}"
+          - name: DOCDB_CLUSTER_ADDRESS
             valueFrom:
               configMapKeyRef:
                 name: global-config
-                key: mongo.addresses
+                key: aws.documentdb.cluster.address
+          - name: DOCDB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: global-secrets
+                key: aws.doc-db.username
+          - name: DOCDB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: global-secrets
+                key: aws.doc-db.password
           - name: DUMP_REQUESTS
             value: "{{ .Values.env.DUMP_REQUESTS }}"
           - name: API_HOST

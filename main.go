@@ -80,13 +80,6 @@ func main() {
 		EnvVar: "NOTIFICATIONS_LIMIT",
 	})
 
-	mongoAddress := app.String(cli.StringOpt{
-		Name:   "db",
-		Desc:   "MongoDB database connection string (i.e. comma separated list of ip:port)",
-		Value:  "localhost:27017",
-		EnvVar: "MONGO_ADDRESSES",
-	})
-
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
 		Value:  "./api.yml",
@@ -101,18 +94,39 @@ func main() {
 		EnvVar: "LOG_LEVEL",
 	})
 
-	mongoDatabase := app.String(cli.StringOpt{
-		Name:   "mongoDatabase",
+	dbAddress := app.String(cli.StringOpt{
+		Name:   "db",
+		Desc:   "MongoDB database connection string (i.e. comma separated list of ip:port)",
+		Value:  "localhost:27017",
+		EnvVar: "MONGO_ADDRESSES",
+	})
+
+	dbDatabase := app.String(cli.StringOpt{
+		Name:   "dbDatabase",
 		Value:  "upp-store",
 		Desc:   "Mongo database to read from",
 		EnvVar: "MONGO_DATABASE",
 	})
 
-	mongoCollection := app.String(cli.StringOpt{
-		Name:   "mongoCollection",
+	dbCollection := app.String(cli.StringOpt{
+		Name:   "dbCollection",
 		Value:  "list-notifications",
 		Desc:   "Mongo collection to read from",
 		EnvVar: "MONGO_COLLECTION",
+	})
+
+	dbUsername := app.String(cli.StringOpt{
+		Name:   "dbUsername",
+		Value:  "",
+		Desc:   "Username to connect to DocumentDB",
+		EnvVar: "DOCDB_USERNAME",
+	})
+
+	dbPassword := app.String(cli.StringOpt{
+		Name:   "dbPassword",
+		Value:  "",
+		Desc:   "Password to use to connect to DocumentDB",
+		EnvVar: "DOCDB_PASSWORD",
 	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)
@@ -121,7 +135,7 @@ func main() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
 		log.Info("Initialising MongoDB.")
-		client, err := db.NewClient(*mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
+		client, err := db.NewClient(*dbAddress, *dbUsername, *dbPassword, *dbDatabase, *dbCollection, *cacheMaxAge, *limit, log)
 		if err != nil {
 			log.WithError(err).Error("Failed to create database client")
 			return

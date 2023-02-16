@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -22,15 +23,18 @@ func TestOpenPingAndConfig(t *testing.T) {
 	if strings.TrimSpace(mongoURL) == "" {
 		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
 	}
+	mongoURL = fmt.Sprintf("mongodb://%s", mongoURL)
 
 	database := "upp-store"
 	collection := "testing"
+	username := "testUser"
+	password := "testPass"
 	cacheDelay := 10
 	maxLimit := 200
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, username, password, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	assert.NoError(t, client.Ping(), "We should not error pinging mongo!")
@@ -47,16 +51,19 @@ func TestReadWriteFind(t *testing.T) {
 	if strings.TrimSpace(mongoURL) == "" {
 		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
 	}
+	mongoURL = fmt.Sprintf("mongodb://%s", mongoURL)
 
 	exampleTime := time.Date(2017, 02, 02, 12, 51, 0, 0, time.UTC)
 	database := "upp-store"
 	collection := "testing"
+	username := "testUser"
+	password := "testPass"
 	cacheDelay := 10
 	maxLimit := 200
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, username, password, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	notification := model.InternalNotification{
@@ -99,15 +106,18 @@ func TestNotFound(t *testing.T) {
 	if strings.TrimSpace(mongoURL) == "" {
 		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
 	}
+	mongoURL = fmt.Sprintf("mongodb://%s", mongoURL)
 
 	database := "upp-store"
 	collection := "testing"
+	username := "testUser"
+	password := "testPass"
 	cacheDelay := 10
 	maxLimit := 200
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, username, password, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	_, err = client.FindNotificationByTransactionID("tid_i-dont-exist")

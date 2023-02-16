@@ -4,7 +4,7 @@
 -->
 # UPP - List Notifications RW
 
-This service is responsible for writing/reading change events for every list publish to/from a Mongo document store. This API is used to discover list updates.
+This service is responsible for writing/reading change events for every list publish to/from a DocumentDB document store. This API is used to discover list updates.
 
 ## Code
 
