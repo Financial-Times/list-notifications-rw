@@ -156,8 +156,8 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
-	assert.Equal(t, 500, w.Code, "Mongo was broken but we didn't return 500!")
-	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")
+	assert.Equal(t, 500, w.Code, "Database was broken but we didn't return 500!")
+	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message database read fail")
 
 	mockClient.AssertExpectations(t)
 	t.Log("Recorded 500 response as expected, and since date was accepted.")
@@ -190,8 +190,8 @@ func TestFailedToQueryAndOffset(t *testing.T) {
 
 	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
-	assert.Equal(t, 500, w.Code, "Mongo failed to query but we didn't return 500!")
-	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")
+	assert.Equal(t, 500, w.Code, "Database failed to query but we didn't return 500!")
+	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message database read fail")
 
 	mockClient.AssertExpectations(t)
 	t.Log("Recorded 500 response as expected, and since date was accepted.")

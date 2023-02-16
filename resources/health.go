@@ -48,10 +48,10 @@ func getHealthChecks(db databaseHealthChecker) []fthealth.Check {
 		{
 			Name:             "Check Connectivity To Lists Database",
 			BusinessImpact:   "Notifications for list changes will not be available to API consumers (NextFT).",
-			TechnicalSummary: "The service is unable to connect to MongoDB. Notifications cannot be written to or read from the store.",
+			TechnicalSummary: "The service is unable to connect to database. Notifications cannot be written to or read from the store.",
 			Severity:         1,
 			PanicGuide:       "https://runbooks.ftops.tech/upp-list-notifications-rw",
-			Checker:          pingMongo(db),
+			Checker:          pingDatabase(db),
 		},
 		{
 			Name:           "List Notifications RW - Search indexes are created",
@@ -65,7 +65,7 @@ func getHealthChecks(db databaseHealthChecker) []fthealth.Check {
 	}
 }
 
-func pingMongo(db databaseHealthChecker) func() (string, error) {
+func pingDatabase(db databaseHealthChecker) func() (string, error) {
 	return func() (string, error) {
 		return "", db.Ping()
 	}

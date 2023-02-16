@@ -4,6 +4,6 @@ service:
   name: list-notifications-rw
 env:
   DUMP_REQUESTS: false
-  mongo:
-    database: "upp-store"
-    collection: "list-notifications"
+  DB_NAME: upp-store
+  DB_COLLECTION: list-notifications
+  NOTIFICATIONS_LIMIT: 200
