@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/Financial-Times/transactionid-utils-go v1.0.0 // indirect
+	github.com/Financial-Times/upp-go-sdk v1.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/uniuri v1.2.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
