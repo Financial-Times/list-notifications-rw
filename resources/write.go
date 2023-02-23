@@ -12,7 +12,7 @@ import (
 )
 
 // WriteNotification will write a new notification for the provided list.
-func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db db.DB) func(w http.ResponseWriter, r *http.Request) {
+func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db db.Database) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if dumpRequests {
 			dumpRequest(r)
@@ -31,16 +31,14 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 			return
 		}
 
-		tx, err := db.Open()
-		if err != nil {
-			log.WithError(err).Error("Failed to connect to mongo")
-			writeMessage("An internal server error prevented processing of your request.", 500, w)
+		if err = db.WriteNotification(notification); err != nil {
+			log.WithError(err).
+				WithField("uuid", uuid).
+				WithField("tid", r.Header.Get("X-Request-Id")).
+				Error("Failed to write request")
+			writeMessage("Failed to write request.", 500, w)
 			return
 		}
-
-		defer tx.Close()
-
-		tx.WriteNotification(notification)
 
 		log.WithField("uuid", uuid).WithField("transaction_id", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
 		w.WriteHeader(200)
@@ -66,5 +64,8 @@ func writeMessage(message string, status int, w http.ResponseWriter) {
 
 	m := msg{Message: message}
 	encoder := json.NewEncoder(w)
-	encoder.Encode(m)
+	if err := encoder.Encode(m); err != nil {
+		log.WithError(err).Error("Failed to write message")
+		return
+	}
 }

@@ -9,29 +9,22 @@ import (
 	"github.com/Financial-Times/service-status-go/gtg"
 )
 
-const (
-	contentType  = "Content-Type"
-	plainText    = "text/plain; charset=US-ASCII"
-	cacheControl = "Cache-control"
-	noCache      = "no-cache"
-)
-
 type HealthService struct {
 	fthealth.TimedHealthCheck
 }
 
-func NewHealthService(db db.DB, appSystemCode string, appName string, appDescription string) *HealthService {
+func NewHealthService(db db.Database, appSystemCode string, appName string, appDescription string) *HealthService {
 	hcService := &HealthService{}
 	hcService.SystemCode = appSystemCode
 	hcService.Name = appName
 	hcService.Description = appDescription
 	hcService.Timeout = 10 * time.Second
-	hcService.Checks = getHealthchecks(db)
+	hcService.Checks = getHealthChecks(db)
 
 	return hcService
 }
 
-// HealthChecks returns a handler for the standard FT healthchecks
+// HealthChecksHandler HealthChecks returns a handler for the standard FT health checks
 func (service *HealthService) HealthChecksHandler() func(w http.ResponseWriter, r *http.Request) {
 	return fthealth.Handler(service)
 }
@@ -46,7 +39,7 @@ func (service *HealthService) GTG() gtg.Status {
 	return gtg.Status{GoodToGo: true}
 }
 
-func getHealthchecks(db db.DB) []fthealth.Check {
+func getHealthChecks(db db.Database) []fthealth.Check {
 	return []fthealth.Check{
 		{
 			Name:             "CheckConnectivityToListsDatabase",
@@ -59,15 +52,8 @@ func getHealthchecks(db db.DB) []fthealth.Check {
 	}
 }
 
-func pingMongo(db db.DB) func() (string, error) {
+func pingMongo(db db.Database) func() (string, error) {
 	return func() (string, error) {
-		tx, err := db.Open()
-		if err != nil {
-			return "", err
-		}
-
-		defer tx.Close()
-
-		return "", tx.Ping()
+		return "", db.Ping()
 	}
 }

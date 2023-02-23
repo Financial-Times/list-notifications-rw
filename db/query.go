@@ -5,20 +5,19 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func findByTxID(txid string) bson.M {
-	return bson.M{"publishReference": txid}
+func findByTransactionID(transactionID string) bson.M {
+	return bson.M{"publishReference": transactionID}
 }
 
-func findByPartialTxID(txid string) bson.M {
-	return bson.M{"publishReference": bson.M{"$regex": "^" + txid}}
+func findByPartialTransactionID(transactionID string) bson.M {
+	return bson.M{"publishReference": bson.M{"$regex": "^" + transactionID}}
 }
 
-func generateQuery(offset int, since time.Time) []bson.M {
-	match := getMatch(offset, since)
+func generateQuery(delay, offset, maxLimit int, since time.Time) []bson.M {
+	match := getMatch(delay, offset, since)
 
 	pipeline := []bson.M{
 		match, // get all records that exist between the start and end dates
@@ -65,9 +64,9 @@ func generateQuery(offset int, since time.Time) []bson.M {
 	return pipeline
 }
 
-func getMatch(offset int, since time.Time) bson.M {
-	shifted := shiftSince(since)
-	till := calculateTill(time.Now().UTC())
+func getMatch(delay, offset int, since time.Time) bson.M {
+	shifted := shiftSince(delay, since)
+	till := calculateTill(delay, time.Now().UTC())
 
 	if offset > 0 {
 		return bson.M{
@@ -90,10 +89,10 @@ func getMatch(offset int, since time.Time) bson.M {
 	}
 }
 
-func shiftSince(since time.Time) time.Time {
+func shiftSince(cacheDelay int, since time.Time) time.Time {
 	return since.Add(time.Duration(-1*cacheDelay) * time.Second)
 }
 
-func calculateTill(base time.Time) time.Time {
+func calculateTill(cacheDelay int, base time.Time) time.Time {
 	return base.Add(time.Duration(-1*cacheDelay) * time.Second)
 }

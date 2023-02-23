@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
-	api "github.com/Financial-Times/api-endpoint"
+	"github.com/Financial-Times/api-endpoint"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
@@ -13,8 +15,7 @@ import (
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
-	metrics "github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
+	"github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -87,7 +88,7 @@ func main() {
 		EnvVar: "NOTIFICATIONS_LIMIT",
 	})
 
-	mongoConnection := app.String(cli.StringOpt{
+	mongoAddress := app.String(cli.StringOpt{
 		Name:   "db",
 		Desc:   "MongoDB database connection string (i.e. comma separated list of ip:port)",
 		Value:  "localhost:27017",
@@ -101,39 +102,52 @@ func main() {
 		EnvVar: "API_YML",
 	})
 
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
-	log.Infof("[Startup] %v is starting", *appSystemCode)
+	logLevel := app.String(cli.StringOpt{
+		Name:   "logLevel",
+		Value:  "INFO",
+		Desc:   "Logging level (DEBUG, INFO, WARN, ERROR)",
+		EnvVar: "LOG_LEVEL",
+	})
+
+	mongoDatabase := app.String(cli.StringOpt{
+		Name:   "mongoDatabase",
+		Value:  "upp-store",
+		Desc:   "Mongo database to read from",
+		EnvVar: "MONGO_DATABASE",
+	})
+
+	mongoCollection := app.String(cli.StringOpt{
+		Name:   "mongoCollection",
+		Value:  "content",
+		Desc:   "Mongo collection to read from",
+		EnvVar: "MONGO_COLLECTION",
+	})
+
+	log := logger.NewUPPLogger(*appName, *logLevel)
 
 	app.Action = func() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
+		timeout := time.Duration(*mongoConnectionTimeout) * time.Second
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
 		log.Info("Initialising MongoDB.")
-		mongo := &db.MongoDB{
-			Urls:       *mongoConnection,
-			Timeout:    *mongoConnectionTimeout,
-			MaxLimit:   *limit,
-			CacheDelay: *cacheMaxAge,
-		}
-
-		defer mongo.Close()
-
-		log.Info("Opening initial connection to Mongo.")
-		tx, err := mongo.Open()
-		if err != nil {
-			log.WithError(err).Error("Failed to connect to Mongo!")
-			return
-		}
+		client, err := db.NewClient(ctx, *mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
 
 		log.Info("Ensuring Mongo indices are setup...")
-		err = tx.EnsureIndices()
+		err = client.EnsureIndexes()
 		if err != nil {
 			log.WithError(err).Error("Failed to ensure mongo indices!")
 			return
 		}
 		log.Info("Finished ensuring indices.")
 
-		tx.Close()
+		defer func(client db.Database) {
+			if err := client.Close(); err != nil {
+				log.WithError(err).Error("Failed to close connection to DB")
+			}
+		}(client)
 
 		mapper := mapping.DefaultMapper{ApiHost: *apiHost}
 
@@ -143,20 +157,33 @@ func main() {
 			MaxLimit:   *limit,
 		}
 
-		healthService := resources.NewHealthService(mongo, *appSystemCode, *appName, appDescription)
+		healthService := resources.NewHealthService(client, *appSystemCode, *appName, appDescription)
 
-		server(apiYml, *port, *maxSinceInterval, *dumpRequests, healthService, mapper, nextLink, mongo)
+		startService(apiYml, *port, *maxSinceInterval, *dumpRequests, healthService, mapper, nextLink, client, log)
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.WithError(err).Error("Failed to run app")
+		return
+	}
 }
 
-func server(apiYml *string, port string, maxSinceInterval int, dumpRequests bool, healthService *resources.HealthService, mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB) {
+func startService(
+	apiYml *string,
+	port string,
+	maxSinceInterval int,
+	dumpRequests bool,
+	healthService *resources.HealthService,
+	mapper mapping.NotificationsMapper,
+	nextLink mapping.NextLinkGenerator,
+	db db.Database,
+	log *logger.UPPLogger,
+) {
 	r := mux.NewRouter()
 
 	var monitoringRouter http.Handler = r
 
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log, monitoringRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
 
 	if apiYml != nil {
@@ -195,5 +222,8 @@ func server(apiYml *string, port string, maxSinceInterval int, dumpRequests bool
 	}
 
 	log.Info("Starting server on " + addr)
-	server.ListenAndServe()
+	if err := server.ListenAndServe(); err != nil {
+		log.WithError(err).Error("Failed to start server")
+		return
+	}
 }

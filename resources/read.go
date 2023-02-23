@@ -14,7 +14,7 @@ import (
 )
 
 // ReadNotifications reads notifications from the backing db
-func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.DB, maxSinceInterval int) func(w http.ResponseWriter, r *http.Request) {
+func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.Database, maxSinceInterval int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {
@@ -43,25 +43,16 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 			return
 		}
 
-		tx, err := db.Open()
-		if err != nil {
-			log.WithError(err).Error("Failed to connect to mongo")
-			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
-			return
-		}
-
-		defer tx.Close()
-
-		notifications, err := tx.ReadNotifications(offset, since)
+		notifications, err := db.ReadNotifications(offset, since)
 		if err != nil {
 			log.WithError(err).Error("Failed to query mongo for notifications!")
 			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
 			return
 		}
 
-		results := []model.PublicNotification{}
+		var results []model.PublicNotification
 		for i, n := range *notifications {
-			if i >= db.Limit() {
+			if i >= db.GetLimit() {
 				break
 			}
 			results = append(results, mapper.MapInternalNotificationToPublic(n))
@@ -78,7 +69,10 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		w.Header().Add("Content-Type", "application/json")
 
 		encoder := json.NewEncoder(w)
-		encoder.Encode(page)
+		if err = encoder.Encode(page); err != nil {
+			log.WithError(err).Error("Failed to encode page")
+			return
+		}
 	}
 }
 

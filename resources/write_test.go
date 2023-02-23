@@ -2,7 +2,6 @@ package resources
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,100 +16,76 @@ func TestWriteNotification(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(mockWriteBody))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
 	decoder := json.NewDecoder(strings.NewReader(mockWriteBody))
 	expectedNotification, _ := testMapper.MapRequestToInternalNotification("ef863741-709a-4062-a8f1-987c44db1db5", decoder)
 
-	mockDb.On("Open").Return(mockTx, nil)
+	mockClient.On("WriteNotification", expectedNotification).Return(nil)
 
-	mockTx.On("Close").Return()
-	mockTx.On("WriteNotification", expectedNotification).Return()
-
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestNotJson(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(""))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
-	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestNoUUID(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(`{"uuid":""}`))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
-	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestInvalidUUID(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(`{"uuid":"i am a bit invalid"}`))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
-	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestUUIDDoesNotMatch(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(`{"uuid":"cee15258-6762-4fc5-8f57-0b5ca4c3aa20"}`))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
-	mockDb.AssertNotCalled(t, "Open")
 }
 
 func TestInvalidUUIDInPath(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/uuid", strings.NewReader(`{"uuid":"cee15258-6762-4fc5-8f57-0b5ca4c3aa20"}`))
 	w := httptest.NewRecorder()
 
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
+	r := WriteRoute(WriteNotification(true, testMapper, mockClient))
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
-	mockDb.AssertNotCalled(t, "Open")
-}
-
-func TestFailedDatabaseOnWrite(t *testing.T) {
-	req, _ := http.NewRequest("PUT", "http://our.host.name/lists/notifications/ef863741-709a-4062-a8f1-987c44db1db5", strings.NewReader(mockWriteBody))
-	w := httptest.NewRecorder()
-
-	mockDb := new(MockDB)
-	mockDb.On("Open").Return(nil, errors.New("No writes for u"))
-
-	r := WriteRoute(WriteNotification(true, testMapper, mockDb))
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, 500, w.Code)
-	mockDb.AssertExpectations(t)
 }

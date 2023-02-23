@@ -13,17 +13,14 @@ import (
 )
 
 func TestHealthy(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(nil)
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(nil)
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -50,22 +47,18 @@ func TestHealthy(t *testing.T) {
 
 	assert.True(t, check.Ok, "Expect it's ok")
 
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestUnhealthy(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(errors.New("we ain't looking too good"))
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(errors.New("we ain't looking too good"))
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -92,59 +85,50 @@ func TestUnhealthy(t *testing.T) {
 
 	assert.False(t, check.Ok, "Expect it's not ok")
 
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestWorkingGTG(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(nil)
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(nil)
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestFailingGTG(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(errors.New("omg we are not gtg"))
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(errors.New("omg we are not gtg"))
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestFailingDBGTG(t *testing.T) {
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(nil, errors.New("omg we are not gtg"))
+	mockClient.On("Ping").Return(errors.New("omg we are not gtg"))
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
-	mockDb.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
