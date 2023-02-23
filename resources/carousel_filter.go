@@ -32,13 +32,7 @@ func filterCarouselPublishes(db db.Database, next func(w http.ResponseWriter, r 
 			return
 		}
 
-		writeNotification, err := shouldWriteNotification(uuid, tid, db)
-		if err != nil {
-			writeMessage("An internal server error prevented processing of your request.", http.StatusInternalServerError, w)
-			return
-		}
-
-		if !writeNotification {
+		if !shouldWriteNotification(uuid, tid, db) {
 			writeMessage("Skipping carousel publish; the original notification was published successfully.", http.StatusOK, w)
 			return
 		}
@@ -47,9 +41,9 @@ func filterCarouselPublishes(db db.Database, next func(w http.ResponseWriter, r 
 	}
 }
 
-func shouldWriteNotification(uuid string, tid string, db db.Database) (bool, error) {
+func shouldWriteNotification(uuid string, tid string, db db.Database) bool {
 	if !carouselTidRegex.MatchString(tid) {
-		return true, nil
+		return true
 	}
 
 	log.WithField("uuid", uuid).WithField("transaction_id", tid).Infof("Received carousel notification.")
@@ -58,26 +52,24 @@ func shouldWriteNotification(uuid string, tid string, db db.Database) (bool, err
 	notification, err := db.FindNotificationByTransactionID(originalTid)
 	if err == nil {
 		log.WithField("uuid", uuid).WithField("transaction_id", tid).WithField("lastModified", notification.LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
-		return false, nil
+		return false
 	}
 
-	if errors.Is(err, mongo.ErrNoDocuments) {
-
-		log.WithField("uuid", uuid).WithField("transaction_id", tid).Info("Failed to find notification for original transaction ID, checking for a related carousel transaction.")
-		notification, err = db.FindNotificationByPartialTransactionID(originalTid + "_carousel")
-		if err == nil {
-			log.WithField("uuid", uuid).WithField("transaction_id", tid).WithField("lastModified", notification.LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
-			return false, nil
-		}
-
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return true, nil
-		}
-
+	if !errors.Is(err, mongo.ErrNoDocuments) {
 		log.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
-		return true, nil
+		return true
 	}
 
-	log.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
-	return true, nil
+	log.WithField("uuid", uuid).WithField("transaction_id", tid).Info("Failed to find notification for original transaction ID, checking for a related carousel transaction.")
+	notification, err = db.FindNotificationByPartialTransactionID(originalTid + "_carousel")
+	if err == nil {
+		log.WithField("uuid", uuid).WithField("transaction_id", tid).WithField("lastModified", notification.LastModified).Info("Skipping carousel publish; the original notification was published successfully.")
+		return false
+	}
+
+	if !errors.Is(err, mongo.ErrNoDocuments) {
+		log.WithField("uuid", uuid).WithField("transaction_id", tid).WithError(err).Error("Failed to find original notification for this carousel publish! Writing new notification.")
+	}
+	return true
+
 }

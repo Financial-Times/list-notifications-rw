@@ -67,6 +67,9 @@ func (c *Client) ReadNotifications(offset int, since time.Time) (*[]model.Intern
 
 	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since)
 	pipe, err := collection.Aggregate(c.ctx, query)
+	if err != nil {
+		return nil, err
+	}
 
 	var results []model.InternalNotification
 	if err = pipe.All(c.ctx, &results); err != nil {
@@ -105,13 +108,13 @@ func (c *Client) EnsureIndexes() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	uuidName := "uuid-index"
-	uuidIndex := mongo.IndexModel{
+	lastModifiedName := "last-modified-index"
+	lastModifiedIndex := mongo.IndexModel{
 		Keys: bson.D{
-			primitive.E{Key: "uuid", Value: 1},
+			primitive.E{Key: "-lastModified", Value: 1},
 		},
 		Options: &options.IndexOptions{
-			Name: &uuidName,
+			Name: &lastModifiedName,
 		},
 	}
 	publishReferenceName := "publish-reference-index"
@@ -123,7 +126,16 @@ func (c *Client) EnsureIndexes() error {
 			Name: &publishReferenceName,
 		},
 	}
-	_, err := collection.Indexes().CreateMany(ctx, []mongo.IndexModel{uuidIndex, publishReferenceIndex})
+	uuidName := "uuid-index"
+	uuidIndex := mongo.IndexModel{
+		Keys: bson.D{
+			primitive.E{Key: "uuid", Value: 1},
+		},
+		Options: &options.IndexOptions{
+			Name: &uuidName,
+		},
+	}
+	_, err := collection.Indexes().CreateMany(ctx, []mongo.IndexModel{lastModifiedIndex, publishReferenceIndex, uuidIndex})
 	return err
 }
 

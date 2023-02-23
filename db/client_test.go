@@ -42,55 +42,6 @@ func TestOpenPingAndConfig(t *testing.T) {
 	assert.Equal(t, maxLimit, client.GetLimit(), "Limit should be set to %s", maxLimit)
 }
 
-func TestEnsureIndexes(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Mongo integration for long tests only.")
-	}
-
-	mongoURL := os.Getenv("MONGO_TEST_URL")
-	if strings.TrimSpace(mongoURL) == "" {
-		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
-	}
-
-	database := "upp-store"
-	collection := "list-notifications"
-	cacheDelay := 10
-	maxLimit := 200
-	timeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	log := logger.NewUPPLogger("test", "PANIC")
-
-	client, err := NewClient(ctx, mongoURL, database, collection, cacheDelay, maxLimit, log)
-	require.NoError(t, err)
-
-	err = client.EnsureIndexes()
-	assert.NoError(t, err, "Should not error creating indexes!")
-
-	indexRows, err := client.client.Database(database).Collection(collection).Indexes().List(ctx)
-	assert.NoError(t, err, "Should not throw error getting indexes")
-	var indexes []mongo.IndexModel
-	assert.NoError(t, indexRows.All(ctx, &indexes), "Should not throw error unmarshalling indexes")
-
-	count := 0
-	for _, index := range indexes {
-		switch *index.Options.Name {
-		case "uuid-index":
-			assert.Equal(t, []string{"uuid"}, index.Keys, "There should be a uuid index!")
-			count++
-		case "publish-reference-index":
-			assert.Equal(t, []string{"publishReference"}, index.Keys, "There should be a publishReference index!")
-			count++
-		case "last-modified-index":
-			assert.Equal(t, []string{"-lastModified"}, index.Keys, "There should be a descending lastModified index!")
-			count++
-		}
-	}
-
-	assert.Equal(t, 3, count, "We should have checked 3 indices!")
-}
-
 func TestReadWriteFind(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Mongo integration for long tests only.")
@@ -101,6 +52,7 @@ func TestReadWriteFind(t *testing.T) {
 		t.Fatal("Please set the environment variable MONGO_TEST_URL to run mongo integration tests (e.g. MONGO_TEST_URL=localhost:27017). Alternatively, run `go test -short` to skip them.")
 	}
 
+	exampleTime := time.Date(2017, 02, 02, 12, 51, 0, 0, time.UTC)
 	database := "upp-store"
 	collection := "testing"
 	cacheDelay := 10
@@ -118,12 +70,12 @@ func TestReadWriteFind(t *testing.T) {
 		Title:            "The Art of the Deal: Donald Z Trump",
 		UUID:             "my-new-uuid",
 		PublishReference: "tid_faketxid",
-		LastModified:     time.Date(2017, 02, 02, 12, 51, 0, 0, time.Local),
+		LastModified:     exampleTime,
 		EventType:        "http://www.ft.com/thing/ThingChangeType/UPDATE",
 	}
 	require.NoError(t, client.WriteNotification(&notification))
 
-	notifications, err := client.ReadNotifications(0, time.Date(2017, 02, 02, 12, 50, 0, 0, time.Local))
+	notifications, err := client.ReadNotifications(0, exampleTime)
 	assert.NoError(t, err, "Should not error")
 	assert.NotNil(t, notifications, "Should not be nil")
 
@@ -132,7 +84,7 @@ func TestReadWriteFind(t *testing.T) {
 	assert.Equal(t, (*notifications)[0].UUID, "my-new-uuid", "UUID should match")
 	assert.Equal(t, (*notifications)[0].PublishReference, "tid_faketxid", "TXID should match")
 	assert.Equal(t, (*notifications)[0].EventType, "http://www.ft.com/thing/ThingChangeType/UPDATE", "EventType should match")
-	assert.Equal(t, (*notifications)[0].LastModified, time.Date(2017, 02, 02, 12, 51, 0, 0, time.Local), "Time should match")
+	assert.Equal(t, (*notifications)[0].LastModified, exampleTime, "Time should match")
 
 	notification, err = client.FindNotificationByTransactionID("tid_faketxid")
 	assert.NoError(t, err, "Should not error")

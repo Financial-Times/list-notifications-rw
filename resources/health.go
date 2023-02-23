@@ -49,11 +49,29 @@ func getHealthChecks(db db.Database) []fthealth.Check {
 			PanicGuide:       "https://runbooks.ftops.tech/upp-list-notifications-rw",
 			Checker:          pingMongo(db),
 		},
+		{
+			Name:           "Page Notifications RW - Search indexes are created",
+			BusinessImpact: "Some API consumers may experience slow performance for content requests",
+			TechnicalSummary: "The application indexes for the DocumentDB instance may not be up-to-date (indexing may be in progress). " +
+				"This will result in degraded performance from the content platform and affect a variety of products.",
+			PanicGuide: "https://runbooks.ftops.tech/upp-list-notifications-rw",
+			Severity:   2,
+			Checker:    ensureIndexes(db),
+		},
 	}
 }
 
 func pingMongo(db db.Database) func() (string, error) {
 	return func() (string, error) {
 		return "", db.Ping()
+	}
+}
+
+func ensureIndexes(db db.Database) func() (string, error) {
+	return func() (string, error) {
+		if err := db.EnsureIndexes(); err != nil {
+			return "DocumentDB indexes may not be up-to-date", err
+		}
+		return "DocumentDB indexes are updated", nil
 	}
 }

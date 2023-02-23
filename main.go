@@ -134,12 +134,15 @@ func main() {
 
 		log.Info("Initialising MongoDB.")
 		client, err := db.NewClient(ctx, *mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
+		if err != nil {
+			log.WithError(err).Error("Failed to create database client")
+			return
+		}
 
 		log.Info("Ensuring Mongo indices are setup...")
 		err = client.EnsureIndexes()
 		if err != nil {
-			log.WithError(err).Error("Failed to ensure mongo indices!")
-			return
+			log.WithError(err).Warn("Failed to ensure database indices!")
 		}
 		log.Info("Finished ensuring indices.")
 
