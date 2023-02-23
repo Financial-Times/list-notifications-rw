@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -17,23 +17,27 @@ var carouselTidRegex = regexp.MustCompile(`^(.+)_carousel_\d{10}`)
 // FilterCarouselPublishes checks whether this is a carousel publish and processes it accordingly
 func (f Filters) FilterCarouselPublishes(db db.Database) Filters {
 	next := f.next
-	f.next = filterCarouselPublishes(db, next)
+	f.next = filterCarouselPublishes(db, next, f.log)
 	return f
 }
 
-func filterCarouselPublishes(db db.Database, next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func filterCarouselPublishes(db db.Database, next func(w http.ResponseWriter, r *http.Request), log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
 		uuid := mux.Vars(r)["uuid"]
 
 		if generatedCarouselTidRegex.MatchString(tid) {
 			log.WithField("uuid", uuid).WithField("transaction_id", tid).Info("Skipping generated carousel publish.")
-			writeMessage("Skipping generated carousel publish.", http.StatusOK, w)
+			if err := writeMessage("Skipping generated carousel publish.", http.StatusOK, w); err != nil {
+				log.WithError(err).Error("Failed to write message")
+			}
 			return
 		}
 
-		if !shouldWriteNotification(uuid, tid, db) {
-			writeMessage("Skipping carousel publish; the original notification was published successfully.", http.StatusOK, w)
+		if !shouldWriteNotification(uuid, tid, db, log) {
+			if err := writeMessage("Skipping carousel publish; the original notification was published successfully.", http.StatusOK, w); err != nil {
+				log.WithError(err).Error("Failed to write message")
+			}
 			return
 		}
 
@@ -41,7 +45,7 @@ func filterCarouselPublishes(db db.Database, next func(w http.ResponseWriter, r 
 	}
 }
 
-func shouldWriteNotification(uuid string, tid string, db db.Database) bool {
+func shouldWriteNotification(uuid string, tid string, db db.Database, log *logger.UPPLogger) bool {
 	if !carouselTidRegex.MatchString(tid) {
 		return true
 	}

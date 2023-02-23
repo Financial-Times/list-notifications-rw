@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
-	log "github.com/sirupsen/logrus"
 )
 
 // ReadNotifications reads notifications from the backing db
-func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.Database, maxSinceInterval int) func(w http.ResponseWriter, r *http.Request) {
+func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.Database, maxSinceInterval int, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {

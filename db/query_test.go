@@ -52,7 +52,7 @@ func TestQuery(t *testing.T) {
 	assert.NoError(t, err)
 	log := logger.NewUPPLogger("test", "debug")
 
-	query := generateQuery(10, 50, 102, since)
+	query := generateQuery(10, 50, 102, since, log)
 
 	regex := regexp.MustCompile(`\[\{"\$match":\{"lastModified":\{"\$gte":".*","\$lte":".*"}}},\{"\$sort":\{"lastModified":-1}},\{"\$group":\{"_id":"\$uuid","eventType":\{"\$first":"\$eventType"},"lastModified":\{"\$first":"\$lastModified"},"publishReference":\{"\$first":"\$publishReference"},"title":\{"\$first":"\$title"},"uuid":\{"\$first":"\$uuid"}}},\{"\$sort":\{"lastModified":1,"uuid":1}},\{"\$skip":50},\{"\$limit":103}]`)
 	data, err := json.Marshal(query)

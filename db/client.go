@@ -65,7 +65,7 @@ func (c *Client) WriteNotification(notification *model.InternalNotification) err
 func (c *Client) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := c.client.Database(c.database).Collection(c.collection)
 
-	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since)
+	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since, c.log)
 	pipe, err := collection.Aggregate(c.ctx, query)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Financial-Times/go-logger/v2"
 )
 
 const synthTidPrefix = "SYNTHETIC-REQ-MON"
@@ -15,17 +15,18 @@ const tidHeader = "X-Request-Id"
 // Filters contains the composed chain
 type Filters struct {
 	next func(w http.ResponseWriter, r *http.Request)
+	log  *logger.UPPLogger
 }
 
 // Filter creates a new composable filter.
-func Filter(next func(w http.ResponseWriter, r *http.Request)) Filters {
-	return Filters{next}
+func Filter(next func(w http.ResponseWriter, r *http.Request), log *logger.UPPLogger) Filters {
+	return Filters{next: next, log: log}
 }
 
 // FilterSyntheticTransactions will filter out incoming requests if they have a synthetic prefix.
 func (f Filters) FilterSyntheticTransactions() Filters {
 	next := f.next
-	f.next = filterSyntheticTransactions(next)
+	f.next = filterSyntheticTransactions(next, f.log)
 	return f
 }
 
@@ -41,7 +42,7 @@ func (f Filters) Build() func(w http.ResponseWriter, r *http.Request) {
 	return f.next
 }
 
-func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func filterSyntheticTransactions(next func(w http.ResponseWriter, r *http.Request), log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tid := r.Header.Get(tidHeader)
 		if tid == "" {

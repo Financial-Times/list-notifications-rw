@@ -9,11 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReadNotifications(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
@@ -43,7 +45,7 @@ func TestReadNotifications(t *testing.T) {
 
 	mockClient.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -71,6 +73,7 @@ func TestReadNotifications(t *testing.T) {
 }
 
 func TestReadNoNotifications(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z", nil)
@@ -82,7 +85,7 @@ func TestReadNoNotifications(t *testing.T) {
 
 	mockClient.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 200, w.Code, "Everything should be OK but we didn't return 200!")
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"), "Everything should be OK but we didn't return json!")
@@ -98,11 +101,12 @@ func TestReadNoNotifications(t *testing.T) {
 }
 
 func Test400NoSinceDate(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 	w := httptest.NewRecorder()
 
 	mockClient := new(MockClient)
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 400, w.Code, "No since date, should be 400!")
 	assert.True(t, strings.Contains(w.Body.String(), "{\"message\":\"A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="), "Did not receive expected error message for missing since date")
@@ -112,11 +116,12 @@ func Test400NoSinceDate(t *testing.T) {
 }
 
 func Test400JunkSinceDate(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=some-garbage-date", nil)
 	w := httptest.NewRecorder()
 
 	mockClient := new(MockClient)
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 400, w.Code, "The since date was garbage! Should be 400!")
 	assert.True(t, strings.Contains(w.Body.String(), "{\"message\":\"A mandatory 'since' query parameter has not been specified. Please supply a since date. For eg., since="), "Did not receive expected error message junk since date")
@@ -125,11 +130,12 @@ func Test400JunkSinceDate(t *testing.T) {
 }
 
 func Test400SinceDateTooEarly(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
 	w := httptest.NewRecorder()
 
 	mockClient := new(MockClient)
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 90)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 90, log)(w, req)
 
 	assert.Equal(t, 400, w.Code, "Since date too early, should be 400!")
 	assert.Equal(t, "{\"message\":\"Since date must be within the last 90 days.\"}\n", w.Body.String(), "Did not receive correct error message for since date before max time interval")
@@ -138,6 +144,7 @@ func Test400SinceDateTooEarly(t *testing.T) {
 }
 
 func TestFailedDatabaseOnRead(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.999Z", nil)
 	w := httptest.NewRecorder()
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.999Z")
@@ -145,7 +152,7 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 	mockClient := new(MockClient)
 	mockClient.On("ReadNotifications", 0, mockSince).Return(nil, errors.New("I broke soz"))
 
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo was broken but we didn't return 500!")
 	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")
@@ -155,11 +162,12 @@ func TestFailedDatabaseOnRead(t *testing.T) {
 }
 
 func TestInvalidOffset(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=i-am-soooo-wrong", nil)
 	w := httptest.NewRecorder()
 
 	mockClient := new(MockClient)
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 400, w.Code, "Offset was invalid but we didn't 400!")
 	assert.Equal(t, "{\"message\":\"Please specify an integer offset.\"}\n", w.Body.String(), "Did not receive expected  error message for invalid offset")
@@ -168,6 +176,7 @@ func TestInvalidOffset(t *testing.T) {
 }
 
 func TestFailedToQueryAndOffset(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	mockSince, _ := time.Parse(time.RFC3339Nano, "2006-01-02T15:04:05.99999Z")
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/all?since=2006-01-02T15:04:05.99999Z&offset=100", nil)
@@ -177,7 +186,7 @@ func TestFailedToQueryAndOffset(t *testing.T) {
 
 	mockClient.On("ReadNotifications", 100, mockSince).Return(nil, errors.New("I broke again soz"))
 
-	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000)(w, req)
+	ReadNotifications(testMapper, testLinkGenerator, mockClient, 10000, log)(w, req)
 
 	assert.Equal(t, 500, w.Code, "Mongo failed to query but we didn't return 500!")
 	assert.Equal(t, "{\"message\":\"Failed to retrieve list notifications due to internal server error\"}\n", w.Body.String(), "Did not receive expected error message Mongo database read fail")

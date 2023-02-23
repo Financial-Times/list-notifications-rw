@@ -6,12 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestCarouselFilter(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -23,7 +25,7 @@ func TestCarouselFilter(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -31,6 +33,7 @@ func TestCarouselFilter(t *testing.T) {
 }
 
 func TestCarouselFilterWithUnconventionalTransactionID(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -42,7 +45,7 @@ func TestCarouselFilterWithUnconventionalTransactionID(t *testing.T) {
 	req.Header.Add(tidHeader, "republish_-10bd337c-66d4-48d9-ab8a-e8441fa2ec98_carousel_1493606135")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -50,6 +53,7 @@ func TestCarouselFilterWithUnconventionalTransactionID(t *testing.T) {
 }
 
 func TestPartialCarouselFilter(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -62,7 +66,7 @@ func TestPartialCarouselFilter(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -70,6 +74,7 @@ func TestPartialCarouselFilter(t *testing.T) {
 }
 
 func TestGeneratedCarouselFilter(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -80,7 +85,7 @@ func TestGeneratedCarouselFilter(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890_gentx")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -88,6 +93,7 @@ func TestGeneratedCarouselFilter(t *testing.T) {
 }
 
 func TestNoOriginalPublish(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Log("Request was forwarded on as expected.")
@@ -102,7 +108,7 @@ func TestNoOriginalPublish(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -111,6 +117,7 @@ func TestNoOriginalPublish(t *testing.T) {
 }
 
 func TestErrorFindingOriginalPublish(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Log("Request was forwarded on as expected.")
@@ -127,7 +134,7 @@ func TestErrorFindingOriginalPublish(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 
@@ -136,6 +143,7 @@ func TestErrorFindingOriginalPublish(t *testing.T) {
 }
 
 func TestErrorFindingPartialCarouselPublish(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Log("Request was forwarded on as expected.")
@@ -150,7 +158,7 @@ func TestErrorFindingPartialCarouselPublish(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283_carousel_1234567890")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterCarouselPublishes(mockClient).Build()(w, req)
+	Filter(next, log).FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	mockClient.AssertExpectations(t)
 

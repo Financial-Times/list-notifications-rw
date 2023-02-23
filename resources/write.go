@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 // WriteNotification will write a new notification for the provided list.
-func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db db.Database) func(w http.ResponseWriter, r *http.Request) {
+func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db db.Database, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if dumpRequests {
-			dumpRequest(r)
+			dumpRequest(r, log)
 		}
 
 		decoder := json.NewDecoder(r.Body)
@@ -27,7 +27,9 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 				WithField("uuid", uuid).
 				WithField("tid", r.Header.Get("X-Request-Id")).
 				Error("Invalid request! See error for details.")
-			writeMessage("Invalid Request body.", 400, w)
+			if err = writeMessage("Invalid Request body.", 400, w); err != nil {
+				log.WithError(err).Error("Failed to write message")
+			}
 			return
 		}
 
@@ -36,7 +38,9 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 				WithField("uuid", uuid).
 				WithField("tid", r.Header.Get("X-Request-Id")).
 				Error("Failed to write request")
-			writeMessage("Failed to write request.", 500, w)
+			if err = writeMessage("Failed to write request.", 500, w); err != nil {
+				log.WithError(err).Error("Failed to write message")
+			}
 			return
 		}
 
@@ -45,7 +49,7 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 	}
 }
 
-func dumpRequest(r *http.Request) {
+func dumpRequest(r *http.Request, log *logger.UPPLogger) {
 	dump, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		log.WithError(err).Warn("Failed to dump request!")
@@ -58,14 +62,11 @@ type msg struct {
 	Message string `json:"message"`
 }
 
-func writeMessage(message string, status int, w http.ResponseWriter) {
+func writeMessage(message string, status int, w http.ResponseWriter) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 
 	m := msg{Message: message}
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(m); err != nil {
-		log.WithError(err).Error("Failed to write message")
-		return
-	}
+	return encoder.Encode(m)
 }

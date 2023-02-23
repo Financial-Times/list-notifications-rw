@@ -198,14 +198,14 @@ func startService(
 		}
 	}
 
-	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval))
+	r.HandleFunc("/lists/notifications", resources.ReadNotifications(mapper, nextLink, db, maxSinceInterval, log))
 
-	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db)).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
+	write := resources.Filter(resources.WriteNotification(dumpRequests, mapper, db, log), log).FilterSyntheticTransactions().FilterCarouselPublishes(db).Gunzip().Build()
 	r.HandleFunc("/lists/{uuid}", write).Methods("PUT")
 
 	r.HandleFunc("/__health", healthService.HealthChecksHandler())
 
-	r.HandleFunc("/__log", resources.UpdateLogLevel()).Methods("POST")
+	r.HandleFunc("/__log", resources.UpdateLogLevel(log)).Methods("POST")
 
 	r.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.GTG))
 

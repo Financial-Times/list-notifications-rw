@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Financial-Times/go-logger/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -16,7 +16,7 @@ func findByPartialTransactionID(transactionID string) bson.M {
 	return bson.M{"publishReference": bson.M{"$regex": "^" + transactionID}}
 }
 
-func generateQuery(delay, offset, maxLimit int, since time.Time) []bson.M {
+func generateQuery(delay, offset, maxLimit int, since time.Time, log *logger.UPPLogger) []bson.M {
 	match := getMatch(delay, offset, since)
 
 	pipeline := []bson.M{
