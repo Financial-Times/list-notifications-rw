@@ -32,7 +32,7 @@ func (service *HealthService) HealthChecksHandler() func(w http.ResponseWriter, 
 // GTG lightly tests the service and returns an FT standard GTG response
 func (service *HealthService) GTG() gtg.Status {
 	for _, check := range service.Checks {
-		if _, err := check.Checker(); err != nil {
+		if _, err := check.Checker(); err != nil && check.Severity == 1 {
 			return gtg.Status{GoodToGo: false, Message: err.Error()}
 		}
 	}
@@ -52,7 +52,7 @@ func getHealthChecks(db db.Database) []fthealth.Check {
 		{
 			Name:           "Page Notifications RW - Search indexes are created",
 			BusinessImpact: "Some API consumers may experience slow performance for content requests",
-			TechnicalSummary: "The application indexes for the DocumentDB instance may not be up-to-date (indexing may be in progress). " +
+			TechnicalSummary: "The application indexes for the database may not be up-to-date (indexing may be in progress). " +
 				"This will result in degraded performance from the content platform and affect a variety of products.",
 			PanicGuide: "https://runbooks.ftops.tech/upp-list-notifications-rw",
 			Severity:   2,
