@@ -8,7 +8,6 @@ import (
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -110,27 +109,21 @@ func (c *Client) EnsureIndexes() error {
 
 	lastModifiedName := "last-modified-index"
 	lastModifiedIndex := mongo.IndexModel{
-		Keys: bson.D{
-			primitive.E{Key: "-lastModified", Value: 1},
-		},
+		Keys: bson.M{"lastModified": -1},
 		Options: &options.IndexOptions{
 			Name: &lastModifiedName,
 		},
 	}
 	publishReferenceName := "publish-reference-index"
 	publishReferenceIndex := mongo.IndexModel{
-		Keys: bson.D{
-			primitive.E{Key: "publishReference", Value: 1},
-		},
+		Keys: bson.M{"publishReference": 1},
 		Options: &options.IndexOptions{
 			Name: &publishReferenceName,
 		},
 	}
 	uuidName := "uuid-index"
 	uuidIndex := mongo.IndexModel{
-		Keys: bson.D{
-			primitive.E{Key: "uuid", Value: 1},
-		},
+		Keys: bson.M{"uuid": 1},
 		Options: &options.IndexOptions{
 			Name: &uuidName,
 		},
