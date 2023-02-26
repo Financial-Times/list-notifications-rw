@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"os"
 	"strings"
 	"testing"
@@ -28,13 +27,10 @@ func TestOpenPingAndConfig(t *testing.T) {
 	collection := "testing"
 	cacheDelay := 10
 	maxLimit := 200
-	timeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(ctx, mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	assert.NoError(t, client.Ping(), "We should not error pinging mongo!")
@@ -57,13 +53,10 @@ func TestReadWriteFind(t *testing.T) {
 	collection := "testing"
 	cacheDelay := 10
 	maxLimit := 200
-	timeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(ctx, mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	notification := model.InternalNotification{
@@ -111,13 +104,10 @@ func TestNotFound(t *testing.T) {
 	collection := "testing"
 	cacheDelay := 10
 	maxLimit := 200
-	timeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(ctx, mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	_, err = client.FindNotificationByTransactionID("tid_i-dont-exist")

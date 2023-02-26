@@ -59,13 +59,6 @@ func main() {
 		EnvVar: "API_HOST",
 	})
 
-	mongoConnectionTimeout := app.Int(cli.IntOpt{
-		Name:   "db-connect-timeout",
-		Desc:   "Timeout in milliseconds for the initial database connection.",
-		Value:  3000,
-		EnvVar: "DB_CONNECTION_TIMEOUT",
-	})
-
 	maxSinceInterval := app.Int(cli.IntOpt{
 		Name:   "max-since-interval",
 		Desc:   "The maximum time interval clients are allowed to query for notifications in days.",
