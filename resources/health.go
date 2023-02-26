@@ -5,15 +5,19 @@ import (
 	"time"
 
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/service-status-go/gtg"
 )
+
+type databaseHealthChecker interface {
+	EnsureIndexes() error
+	Ping() error
+}
 
 type HealthService struct {
 	fthealth.TimedHealthCheck
 }
 
-func NewHealthService(db db.Database, appSystemCode string, appName string, appDescription string) *HealthService {
+func NewHealthService(db databaseHealthChecker, appSystemCode string, appName string, appDescription string) *HealthService {
 	hcService := &HealthService{}
 	hcService.SystemCode = appSystemCode
 	hcService.Name = appName
@@ -39,7 +43,7 @@ func (service *HealthService) GTG() gtg.Status {
 	return gtg.Status{GoodToGo: true}
 }
 
-func getHealthChecks(db db.Database) []fthealth.Check {
+func getHealthChecks(db databaseHealthChecker) []fthealth.Check {
 	return []fthealth.Check{
 		{
 			Name:             "CheckConnectivityToListsDatabase",
@@ -50,8 +54,8 @@ func getHealthChecks(db db.Database) []fthealth.Check {
 			Checker:          pingMongo(db),
 		},
 		{
-			Name:           "Page Notifications RW - Search indexes are created",
-			BusinessImpact: "Some API consumers may experience slow performance for content requests",
+			Name:           "List Notifications RW - Search indexes are created",
+			BusinessImpact: "Some API consumers may experience slow performance for list notifications requests",
 			TechnicalSummary: "The application indexes for the database may not be up-to-date (indexing may be in progress). " +
 				"This will result in degraded performance from the content platform and affect a variety of products.",
 			PanicGuide: "https://runbooks.ftops.tech/upp-list-notifications-rw",
@@ -61,17 +65,17 @@ func getHealthChecks(db db.Database) []fthealth.Check {
 	}
 }
 
-func pingMongo(db db.Database) func() (string, error) {
+func pingMongo(db databaseHealthChecker) func() (string, error) {
 	return func() (string, error) {
 		return "", db.Ping()
 	}
 }
 
-func ensureIndexes(db db.Database) func() (string, error) {
+func ensureIndexes(db databaseHealthChecker) func() (string, error) {
 	return func() (string, error) {
 		if err := db.EnsureIndexes(); err != nil {
-			return "DocumentDB indexes may not be up-to-date", err
+			return "Database indexes may not be up-to-date", err
 		}
-		return "DocumentDB indexes are updated", nil
+		return "Database indexes are updated", nil
 	}
 }

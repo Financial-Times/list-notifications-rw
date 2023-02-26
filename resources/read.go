@@ -8,13 +8,17 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
 )
 
+type notificationReader interface {
+	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
+	GetLimit() int
+}
+
 // ReadNotifications reads notifications from the backing db
-func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, db db.Database, maxSinceInterval int, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
+func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.NextLinkGenerator, reader notificationReader, maxSinceInterval int, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		param := r.URL.Query().Get("since")
 		if param == "" {
@@ -43,7 +47,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 			return
 		}
 
-		notifications, err := db.ReadNotifications(offset, since)
+		notifications, err := reader.ReadNotifications(offset, since)
 		if err != nil {
 			log.WithError(err).Error("Failed to query mongo for notifications!")
 			writeMessage("Failed to retrieve list notifications due to internal server error", 500, w)
@@ -52,7 +56,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 
 		var results []model.PublicNotification
 		for i, n := range *notifications {
-			if i >= db.GetLimit() {
+			if i >= reader.GetLimit() {
 				break
 			}
 			results = append(results, mapper.MapInternalNotificationToPublic(n))
@@ -71,7 +75,6 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 		encoder := json.NewEncoder(w)
 		if err = encoder.Encode(page); err != nil {
 			log.WithError(err).Error("Failed to encode page")
-			return
 		}
 	}
 }

@@ -50,7 +50,7 @@ spec:
               configMapKeyRef:
                 name: global-config
                 key: cache-max-age
-          - name: DUMP_REQUESTS
+          - name: LOG_LEVEL
             value: "{{ .Values.env.LOG_LEVEL }}"
           - name: MONGO_DATABASE
             value: "{{ .Values.env.mongo.database }}"

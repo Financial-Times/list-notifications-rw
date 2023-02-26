@@ -37,7 +37,7 @@ func TestHealthy(t *testing.T) {
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
 	assert.True(t, health.Ok, "Expect it's ok")
 
-	assert.Len(t, health.Checks, 2, "Only one health check currently")
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[0]
 
 	assert.NotEmpty(t, check.Name, "Should have a non-empty name")
@@ -76,7 +76,7 @@ func TestUnhealthyBecauseOfPing(t *testing.T) {
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
 	assert.False(t, health.Ok, "Expect it's ok")
 
-	assert.Len(t, health.Checks, 2, "Only one health check currently")
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[0]
 
 	assert.NotEmpty(t, check.Name, "Should have a non-empty name")
@@ -115,16 +115,16 @@ func TestUnhealthyBecauseOfEnsureIndexes(t *testing.T) {
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
 	assert.True(t, health.Ok, "Expect it's ok")
 
-	assert.Len(t, health.Checks, 2, "Only one health check currently")
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[1]
 
-	assert.NotEmpty(t, check.Name, "Should have a non-empty name")
-	assert.NotEmpty(t, check.PanicGuide, "Should have a non-empty panic guide")
+	assert.Equal(t, "List Notifications RW - Search indexes are created", check.Name, "Should have a non-empty name")
+	assert.Equal(t, "https://runbooks.ftops.tech/upp-list-notifications-rw", check.PanicGuide, "Should have a non-empty panic guide")
 	assert.Equal(t, uint8(2), check.Severity, "Severity 2")
-	assert.NotEmpty(t, check.BusinessImpact, "Should have a non-empty business impact")
-	assert.NotEmpty(t, check.TechnicalSummary, "Should have a non-empty technical summary")
+	assert.Equal(t, "Some API consumers may experience slow performance for list notifications requests", check.BusinessImpact, "Should have a non-empty business impact")
+	assert.Equal(t, "The application indexes for the database may not be up-to-date (indexing may be in progress). This will result in degraded performance from the content platform and affect a variety of products.", check.TechnicalSummary, "Should have a non-empty technical summary")
 
-	assert.True(t, check.Ok, "Expect it's not ok")
+	assert.True(t, check.Ok, "Expect it's ok")
 
 	mockClient.AssertExpectations(t)
 }

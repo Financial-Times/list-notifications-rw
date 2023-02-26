@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"time"
@@ -118,7 +117,7 @@ func main() {
 
 	mongoCollection := app.String(cli.StringOpt{
 		Name:   "mongoCollection",
-		Value:  "content",
+		Value:  "list-notifications",
 		Desc:   "Mongo collection to read from",
 		EnvVar: "MONGO_COLLECTION",
 	})
@@ -128,16 +127,18 @@ func main() {
 	app.Action = func() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
-		timeout := time.Duration(*mongoConnectionTimeout) * time.Second
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-
 		log.Info("Initialising MongoDB.")
-		client, err := db.NewClient(ctx, *mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
+		client, err := db.NewClient(*mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
 		if err != nil {
 			log.WithError(err).Error("Failed to create database client")
 			return
 		}
+
+		defer func(client *db.Client) {
+			if err = client.Close(); err != nil {
+				log.WithError(err).Error("Failed to close connection to DB")
+			}
+		}(client)
 
 		log.Info("Ensuring Mongo indices are setup...")
 		err = client.EnsureIndexes()
@@ -145,12 +146,6 @@ func main() {
 			log.WithError(err).Warn("Failed to ensure database indices!")
 		}
 		log.Info("Finished ensuring indices.")
-
-		defer func(client db.Database) {
-			if err := client.Close(); err != nil {
-				log.WithError(err).Error("Failed to close connection to DB")
-			}
-		}(client)
 
 		mapper := mapping.DefaultMapper{ApiHost: *apiHost}
 
@@ -179,7 +174,7 @@ func startService(
 	healthService *resources.HealthService,
 	mapper mapping.NotificationsMapper,
 	nextLink mapping.NextLinkGenerator,
-	db db.Database,
+	db *db.Client,
 	log *logger.UPPLogger,
 ) {
 	r := mux.NewRouter()
@@ -226,7 +221,6 @@ func startService(
 
 	log.Info("Starting server on " + addr)
 	if err := server.ListenAndServe(); err != nil {
-		log.WithError(err).Error("Failed to start server")
-		return
+		log.Infof("Server terminated with message: %s", err)
 	}
 }

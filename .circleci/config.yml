@@ -11,7 +11,7 @@ jobs:
           MONGO_TEST_URL: localhost:27017
           CIRCLE_TEST_REPORTS: /tmp/test-results
           CIRCLE_COVERAGE_REPORT: /tmp/coverage-results
-      - image: mongo:latest
+      - image: mongo:6.0.4
     steps:
       - checkout
       - ft-golang-ci/build

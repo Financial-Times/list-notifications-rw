@@ -6,13 +6,17 @@ import (
 	"net/http/httputil"
 
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
+	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/gorilla/mux"
 )
 
+type notificationWriter interface {
+	WriteNotification(notification *model.InternalNotification) error
+}
+
 // WriteNotification will write a new notification for the provided list.
-func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db db.Database, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
+func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, writer notificationWriter, log *logger.UPPLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if dumpRequests {
 			dumpRequest(r, log)
@@ -20,31 +24,29 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, db
 
 		decoder := json.NewDecoder(r.Body)
 		uuid := mux.Vars(r)["uuid"]
+		logEntry := log.WithFields(map[string]any{
+			"uuid": uuid,
+			"tid":  r.Header.Get("X-Request-Id"),
+		})
 
 		notification, err := mapper.MapRequestToInternalNotification(uuid, decoder)
 		if err != nil {
-			log.WithError(err).
-				WithField("uuid", uuid).
-				WithField("tid", r.Header.Get("X-Request-Id")).
-				Error("Invalid request! See error for details.")
+			logEntry.WithError(err).Error("Invalid request! See error for details.")
 			if err = writeMessage("Invalid Request body.", 400, w); err != nil {
-				log.WithError(err).Error("Failed to write message")
+				logEntry.WithError(err).Error("Failed to write message for unsuccessful mapping of notification")
 			}
 			return
 		}
 
-		if err = db.WriteNotification(notification); err != nil {
-			log.WithError(err).
-				WithField("uuid", uuid).
-				WithField("tid", r.Header.Get("X-Request-Id")).
-				Error("Failed to write request")
+		if err = writer.WriteNotification(notification); err != nil {
+			logEntry.WithError(err).Error("Failed to write notification")
 			if err = writeMessage("Failed to write request.", 500, w); err != nil {
-				log.WithError(err).Error("Failed to write message")
+				logEntry.WithError(err).Error("Failed to write message for unsuccessful notification write")
 			}
 			return
 		}
 
-		log.WithField("uuid", uuid).WithField("transaction_id", r.Header.Get("X-Request-Id")).Info("Successfully processed a notification for this list.")
+		logEntry.Info("Successfully processed a notification for this list.")
 		w.WriteHeader(200)
 	}
 }

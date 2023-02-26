@@ -12,33 +12,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Database interface {
-	WriteNotification(notification *model.InternalNotification) error
-	ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error)
-	FindNotificationByTransactionID(transactionID string) (model.InternalNotification, error)
-	FindNotificationByPartialTransactionID(transactionID string) (model.InternalNotification, error)
-	EnsureIndexes() error
-	GetLimit() int
-	Ping() error
-	Close() error
-}
-
 type Client struct {
 	database   string
 	collection string
 	maxLimit   int
 	cacheDelay int
-	ctx        context.Context
 	client     *mongo.Client
 	log        *logger.UPPLogger
 }
 
 // NewClient creates new client instance
-func NewClient(ctx context.Context, address, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
+func NewClient(address, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
 	uri := fmt.Sprintf("mongodb://%s", address)
 	opts := options.Client().ApplyURI(uri)
 
-	client, err := mongo.Connect(ctx, opts)
+	client, err := mongo.Connect(context.Background(), opts)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +44,7 @@ func NewClient(ctx context.Context, address, database, collection string, cacheD
 // WriteNotification inserts a notification into mongo
 func (c *Client) WriteNotification(notification *model.InternalNotification) error {
 	collection := c.client.Database(c.database).Collection(c.collection)
-	_, err := collection.InsertOne(c.ctx, notification)
+	_, err := collection.InsertOne(context.Background(), notification)
 	return err
 }
 
@@ -64,14 +52,15 @@ func (c *Client) WriteNotification(notification *model.InternalNotification) err
 func (c *Client) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := c.client.Database(c.database).Collection(c.collection)
 
+	ctx := context.Background()
 	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since, c.log)
-	pipe, err := collection.Aggregate(c.ctx, query)
+	pipe, err := collection.Aggregate(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []model.InternalNotification
-	if err = pipe.All(c.ctx, &results); err != nil {
+	if err = pipe.All(ctx, &results); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +85,7 @@ func (c *Client) findNotificationWithFilter(filter bson.M) (model.InternalNotifi
 		client.
 		Database(c.database).
 		Collection(c.collection).
-		FindOne(c.ctx, filter).
+		FindOne(context.Background(), filter).
 		Decode(&notification)
 	return notification, err
 }
@@ -139,10 +128,10 @@ func (c *Client) GetLimit() int {
 
 // Ping returns a mongo ping response
 func (c *Client) Ping() error {
-	return c.client.Ping(c.ctx, nil)
+	return c.client.Ping(context.Background(), nil)
 }
 
 // Close closes the entire database connection
 func (c *Client) Close() error {
-	return c.client.Disconnect(c.ctx)
+	return c.client.Disconnect(context.Background())
 }
