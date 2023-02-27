@@ -113,7 +113,7 @@ func TestUnhealthyBecauseOfEnsureIndexes(t *testing.T) {
 	assert.NotEmpty(t, health.Name, "Should have a non-empty name")
 	assert.NotEmpty(t, health.Description, "Should have a non-empty description")
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
-	assert.True(t, health.Ok, "Expect it's ok")
+	assert.False(t, health.Ok, "Expect it's ok")
 
 	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[1]
@@ -124,7 +124,7 @@ func TestUnhealthyBecauseOfEnsureIndexes(t *testing.T) {
 	assert.Equal(t, "Some API consumers may experience slow performance for list notifications requests", check.BusinessImpact, "Should have a non-empty business impact")
 	assert.Equal(t, "The application indexes for the database may not be up-to-date (indexing may be in progress). This will result in degraded performance from the content platform and affect a variety of products.", check.TechnicalSummary, "Should have a non-empty technical summary")
 
-	assert.True(t, check.Ok, "Expect it's ok")
+	assert.False(t, check.Ok, "Expect it's not ok")
 
 	mockClient.AssertExpectations(t)
 }

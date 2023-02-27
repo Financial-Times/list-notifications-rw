@@ -26,7 +26,10 @@ func NewClient(address, database, collection string, cacheDelay, maxLimit int, l
 	uri := fmt.Sprintf("mongodb://%s", address)
 	opts := options.Client().ApplyURI(uri)
 
-	client, err := mongo.Connect(context.Background(), opts)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +46,11 @@ func NewClient(address, database, collection string, cacheDelay, maxLimit int, l
 
 // WriteNotification inserts a notification into mongo
 func (c *Client) WriteNotification(notification *model.InternalNotification) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
 	collection := c.client.Database(c.database).Collection(c.collection)
-	_, err := collection.InsertOne(context.Background(), notification)
+	_, err := collection.InsertOne(ctx, notification)
 	return err
 }
 
@@ -52,7 +58,9 @@ func (c *Client) WriteNotification(notification *model.InternalNotification) err
 func (c *Client) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	collection := c.client.Database(c.database).Collection(c.collection)
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
 	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since, c.log)
 	pipe, err := collection.Aggregate(ctx, query)
 	if err != nil {
@@ -80,12 +88,15 @@ func (c *Client) FindNotificationByPartialTransactionID(transactionID string) (m
 }
 
 func (c *Client) findNotificationWithFilter(filter bson.M) (model.InternalNotification, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
 	var notification model.InternalNotification
 	err := c.
 		client.
 		Database(c.database).
 		Collection(c.collection).
-		FindOne(context.Background(), filter).
+		FindOne(ctx, filter).
 		Decode(&notification)
 	return notification, err
 }
@@ -128,10 +139,14 @@ func (c *Client) GetLimit() int {
 
 // Ping returns a mongo ping response
 func (c *Client) Ping() error {
-	return c.client.Ping(context.Background(), nil)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+	return c.client.Ping(ctx, nil)
 }
 
 // Close closes the entire database connection
 func (c *Client) Close() error {
-	return c.client.Disconnect(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+	return c.client.Disconnect(ctx)
 }

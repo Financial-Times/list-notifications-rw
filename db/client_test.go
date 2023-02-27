@@ -69,10 +69,10 @@ func TestReadWriteFind(t *testing.T) {
 	require.NoError(t, client.WriteNotification(&notification))
 
 	notifications, err := client.ReadNotifications(0, exampleTime)
-	assert.NoError(t, err, "Should not error")
+	require.NoError(t, err, "Should not error")
 	assert.NotNil(t, notifications, "Should not be nil")
 
-	assert.Len(t, *notifications, 1, "Should be one notification")
+	require.Len(t, *notifications, 1, "Should be one notification")
 	assert.Equal(t, (*notifications)[0].Title, "The Art of the Deal: Donald Z Trump", "Should be DJTs book")
 	assert.Equal(t, (*notifications)[0].UUID, "my-new-uuid", "UUID should match")
 	assert.Equal(t, (*notifications)[0].PublishReference, "tid_faketxid", "TXID should match")
@@ -80,12 +80,12 @@ func TestReadWriteFind(t *testing.T) {
 	assert.Equal(t, (*notifications)[0].LastModified, exampleTime, "Time should match")
 
 	notification, err = client.FindNotificationByTransactionID("tid_faketxid")
-	assert.NoError(t, err, "Should not error")
+	require.NoError(t, err, "Should not error")
 	assert.NotNil(t, notification.UUID != "", "Should not be empty string")
 	assert.Equal(t, notification.PublishReference, "tid_faketxid", "Transaction ID should match")
 
 	notification, err = client.FindNotificationByPartialTransactionID("tid_fake")
-	assert.NoError(t, err, "Should not error")
+	require.NoError(t, err, "Should not error")
 	assert.NotNil(t, notification.UUID != "", "Should not be empty string")
 	assert.Equal(t, notification.PublishReference, "tid_faketxid", "Transaction ID should match")
 }

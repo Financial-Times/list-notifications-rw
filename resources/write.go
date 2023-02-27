@@ -25,8 +25,8 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, wr
 		decoder := json.NewDecoder(r.Body)
 		uuid := mux.Vars(r)["uuid"]
 		logEntry := log.WithFields(map[string]any{
-			"uuid": uuid,
-			"tid":  r.Header.Get("X-Request-Id"),
+			"uuid":           uuid,
+			"transaction_id": r.Header.Get("X-Request-Id"),
 		})
 
 		notification, err := mapper.MapRequestToInternalNotification(uuid, decoder)
@@ -40,7 +40,7 @@ func WriteNotification(dumpRequests bool, mapper mapping.NotificationsMapper, wr
 
 		if err = writer.WriteNotification(notification); err != nil {
 			logEntry.WithError(err).Error("Failed to write notification")
-			if err = writeMessage("Failed to write request.", 500, w); err != nil {
+			if err = writeMessage("Failed to write notification.", 500, w); err != nil {
 				logEntry.WithError(err).Error("Failed to write message for unsuccessful notification write")
 			}
 			return

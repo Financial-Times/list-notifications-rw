@@ -46,7 +46,7 @@ func (service *HealthService) GTG() gtg.Status {
 func getHealthChecks(db databaseHealthChecker) []fthealth.Check {
 	return []fthealth.Check{
 		{
-			Name:             "CheckConnectivityToListsDatabase",
+			Name:             "Check Connectivity To Lists Database",
 			BusinessImpact:   "Notifications for list changes will not be available to API consumers (NextFT).",
 			TechnicalSummary: "The service is unable to connect to MongoDB. Notifications cannot be written to or read from the store.",
 			Severity:         1,
@@ -73,9 +73,11 @@ func pingMongo(db databaseHealthChecker) func() (string, error) {
 
 func ensureIndexes(db databaseHealthChecker) func() (string, error) {
 	return func() (string, error) {
-		if err := db.EnsureIndexes(); err != nil {
-			return "Database indexes may not be up-to-date", err
-		}
-		return "Database indexes are updated", nil
+
+		return "", db.EnsureIndexes()
+		//if err := db.EnsureIndexes(); err != nil {
+		//	return "Database indexes may not be up-to-date", err
+		//}
+		//return "Database indexes are updated", nil
 	}
 }

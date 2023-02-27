@@ -69,11 +69,11 @@ func (m *MockClient) WriteNotification(notification *model.InternalNotification)
 }
 
 func (m *MockClient) EnsureIndexes() error {
-	m.Called()
-	return nil
+	args := m.Called()
+	return args.Error(0)
 }
 
 func (m *MockClient) Close() error {
-	m.Called()
-	return nil
+	args := m.Called()
+	return args.Error(0)
 }
