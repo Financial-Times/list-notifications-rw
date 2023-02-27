@@ -73,11 +73,9 @@ func pingMongo(db databaseHealthChecker) func() (string, error) {
 
 func ensureIndexes(db databaseHealthChecker) func() (string, error) {
 	return func() (string, error) {
-
-		return "", db.EnsureIndexes()
-		//if err := db.EnsureIndexes(); err != nil {
-		//	return "Database indexes may not be up-to-date", err
-		//}
-		//return "Database indexes are updated", nil
+		if err := db.EnsureIndexes(); err != nil {
+			return "Database indexes may not be up-to-date", err
+		}
+		return "Database indexes are updated", nil
 	}
 }
