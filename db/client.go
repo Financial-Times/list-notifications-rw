@@ -46,7 +46,7 @@ func NewClient(address, database, collection string, cacheDelay, maxLimit int, l
 
 // WriteNotification inserts a notification into mongo
 func (c *Client) WriteNotification(notification *model.InternalNotification) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	collection := c.client.Database(c.database).Collection(c.collection)
@@ -56,12 +56,12 @@ func (c *Client) WriteNotification(notification *model.InternalNotification) err
 
 // ReadNotifications reads notifications from the collection.
 func (c *Client) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
-	collection := c.client.Database(c.database).Collection(c.collection)
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
 	query := generateQuery(c.cacheDelay, offset, c.maxLimit, since, c.log)
+
+	collection := c.client.Database(c.database).Collection(c.collection)
 	pipe, err := collection.Aggregate(ctx, query)
 	if err != nil {
 		return nil, err
@@ -103,10 +103,6 @@ func (c *Client) findNotificationWithFilter(filter bson.M) (model.InternalNotifi
 
 // EnsureIndexes creates indexes
 func (c *Client) EnsureIndexes() error {
-	collection := c.client.Database(c.database).Collection(c.collection)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
 	lastModifiedName := "last-modified-index"
 	lastModifiedIndex := mongo.IndexModel{
 		Keys: bson.M{"lastModified": -1},
@@ -128,6 +124,12 @@ func (c *Client) EnsureIndexes() error {
 			Name: &uuidName,
 		},
 	}
+
+	collection := c.client.Database(c.database).Collection(c.collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
 	_, err := collection.Indexes().CreateMany(ctx, []mongo.IndexModel{lastModifiedIndex, publishReferenceIndex, uuidIndex})
 	return err
 }
@@ -139,7 +141,7 @@ func (c *Client) GetLimit() int {
 
 // Ping returns a mongo ping response
 func (c *Client) Ping() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	return c.client.Ping(ctx, nil)
 }
