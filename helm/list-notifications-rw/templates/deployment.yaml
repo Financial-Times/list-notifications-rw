@@ -50,6 +50,12 @@ spec:
               configMapKeyRef:
                 name: global-config
                 key: cache-max-age
+          - name: LOG_LEVEL
+            value: "{{ .Values.env.LOG_LEVEL }}"
+          - name: MONGO_DATABASE
+            value: "{{ .Values.env.mongo.database }}"
+          - name: MONGO_COLLECTION
+            value: "{{ .Values.env.mongo.collection }}"
         ports:
           - containerPort: 8080
         livenessProbe:

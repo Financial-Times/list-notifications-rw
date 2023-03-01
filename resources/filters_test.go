@@ -8,10 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilterSyntheticTransactions(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -20,13 +22,14 @@ func TestFilterSyntheticTransactions(t *testing.T) {
 	req.Header.Add(tidHeader, synthTidPrefix+"_a-fake-tid-which-should-be-rejected-if-all-goes-well")
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterSyntheticTransactions().Build()(w, req)
+	Filter(next, log).FilterSyntheticTransactions().Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Log("Request was filtered.")
 }
 
 func TestAllowsNormalTransactions(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Log("Request was forwarded on as expected.")
@@ -37,15 +40,16 @@ func TestAllowsNormalTransactions(t *testing.T) {
 	req.Header.Add(tidHeader, "tid_123761283")
 
 	w := httptest.NewRecorder()
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	Filter(next).FilterSyntheticTransactions().FilterCarouselPublishes(mockDb).Build()(w, req)
+	Filter(next, log).FilterSyntheticTransactions().FilterCarouselPublishes(mockClient).Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	assert.True(t, passed)
 }
 
 func TestAllowsNoTID(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -53,12 +57,13 @@ func TestAllowsNoTID(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://nothing/at/all", nil)
 
 	w := httptest.NewRecorder()
-	Filter(next).FilterSyntheticTransactions().Build()(w, req)
+	Filter(next, log).FilterSyntheticTransactions().Build()(w, req)
 
 	assert.Equal(t, 400, w.Code)
 }
 
 func TestFailUnzip(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("Shouldn't reach here!")
 	}
@@ -67,12 +72,13 @@ func TestFailUnzip(t *testing.T) {
 	req.Header.Add("Content-Encoding", "gzip")
 
 	w := httptest.NewRecorder()
-	Filter(next).Gunzip().Build()(w, req)
+	Filter(next, log).Gunzip().Build()(w, req)
 
 	assert.Equal(t, 400, w.Code)
 }
 
 func TestUnzipOk(t *testing.T) {
+	log := logger.NewUPPLogger("test", "debug")
 	passed := false
 	next := func(w http.ResponseWriter, r *http.Request) {
 		t.Log("Request was forwarded on as expected.")
@@ -87,7 +93,7 @@ func TestUnzipOk(t *testing.T) {
 	req.Header.Add("Content-Encoding", "gzip")
 
 	w := httptest.NewRecorder()
-	Filter(next).Gunzip().Build()(w, req)
+	Filter(next, log).Gunzip().Build()(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	assert.True(t, passed)

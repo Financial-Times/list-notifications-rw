@@ -15,3 +15,4 @@ resources:
     memory: 16Mi
 env:
   DUMP_REQUESTS: false
+  LOG_LEVEL: INFO

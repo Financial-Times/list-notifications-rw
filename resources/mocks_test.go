@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Financial-Times/list-notifications-rw/db"
 	"github.com/Financial-Times/list-notifications-rw/mapping"
 	"github.com/Financial-Times/list-notifications-rw/model"
 	"github.com/gorilla/mux"
@@ -20,39 +19,21 @@ func WriteRoute(handler func(w http.ResponseWriter, r *http.Request)) *mux.Route
 	return r
 }
 
-type MockDB struct {
+type MockClient struct {
 	mock.Mock
 }
 
-type MockTX struct {
-	mock.Mock
-}
-
-func (m *MockDB) Open() (db.TX, error) {
-	args := m.Called()
-	tx := args.Get(0)
-	if tx == nil {
-		return nil, args.Error(1)
-	}
-
-	return tx.(db.TX), args.Error(1)
-}
-
-func (m *MockDB) Close() {
-	m.Called()
-}
-
-func (m *MockDB) Limit() int {
+func (m *MockClient) GetLimit() int {
 	args := m.Called()
 	return args.Int(0)
 }
 
-func (m *MockTX) Ping() error {
+func (m *MockClient) Ping() error {
 	args := m.Called()
 	return args.Error(0)
 }
 
-func (m *MockTX) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
+func (m *MockClient) ReadNotifications(offset int, since time.Time) (*[]model.InternalNotification, error) {
 	args := m.Called(offset, since)
 	notifications := args.Get(0)
 	if notifications == nil {
@@ -62,35 +43,37 @@ func (m *MockTX) ReadNotifications(offset int, since time.Time) (*[]model.Intern
 	return notifications.(*[]model.InternalNotification), args.Error(1)
 }
 
-func (m *MockTX) FindNotification(txid string) (*[]model.InternalNotification, bool, error) {
-	args := m.Called(txid)
+func (m *MockClient) FindNotificationByTransactionID(transactionID string) (model.InternalNotification, error) {
+	args := m.Called(transactionID)
 	notifications := args.Get(0)
 	if notifications == nil {
-		return nil, args.Bool(1), args.Error(2)
+		return model.InternalNotification{}, args.Error(1)
 	}
 
-	return notifications.(*[]model.InternalNotification), args.Bool(1), args.Error(2)
+	return notifications.(model.InternalNotification), args.Error(1)
 }
 
-func (m *MockTX) FindNotificationByPartialTransactionID(txid string) (*[]model.InternalNotification, bool, error) {
-	args := m.Called(txid)
+func (m *MockClient) FindNotificationByPartialTransactionID(transactionID string) (model.InternalNotification, error) {
+	args := m.Called(transactionID)
 	notifications := args.Get(0)
 	if notifications == nil {
-		return nil, args.Bool(1), args.Error(2)
+		return model.InternalNotification{}, args.Error(1)
 	}
 
-	return notifications.(*[]model.InternalNotification), args.Bool(1), args.Error(2)
+	return notifications.(model.InternalNotification), args.Error(1)
 }
 
-func (m *MockTX) WriteNotification(notification *model.InternalNotification) {
-	m.Called(notification)
+func (m *MockClient) WriteNotification(notification *model.InternalNotification) error {
+	args := m.Called(notification)
+	return args.Error(0)
 }
 
-func (m *MockTX) EnsureIndices() error {
-	m.Called()
-	return nil
+func (m *MockClient) EnsureIndexes() error {
+	args := m.Called()
+	return args.Error(0)
 }
 
-func (m *MockTX) Close() {
-	m.Called()
+func (m *MockClient) Close() error {
+	args := m.Called()
+	return args.Error(0)
 }

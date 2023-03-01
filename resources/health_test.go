@@ -13,17 +13,15 @@ import (
 )
 
 func TestHealthy(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(nil)
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(nil)
+	mockClient.On("EnsureIndexes").Return(nil)
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -39,7 +37,7 @@ func TestHealthy(t *testing.T) {
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
 	assert.True(t, health.Ok, "Expect it's ok")
 
-	assert.Len(t, health.Checks, 1, "Only one health check currently")
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[0]
 
 	assert.NotEmpty(t, check.Name, "Should have a non-empty name")
@@ -50,22 +48,19 @@ func TestHealthy(t *testing.T) {
 
 	assert.True(t, check.Ok, "Expect it's ok")
 
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
-func TestUnhealthy(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+func TestUnhealthyBecauseOfPing(t *testing.T) {
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(errors.New("we ain't looking too good"))
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(errors.New("we ain't looking too good"))
+	mockClient.On("EnsureIndexes").Return(nil)
 
 	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	hs.HealthChecksHandler()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -81,7 +76,7 @@ func TestUnhealthy(t *testing.T) {
 	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
 	assert.False(t, health.Ok, "Expect it's ok")
 
-	assert.Len(t, health.Checks, 1, "Only one health check currently")
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
 	check := health.Checks[0]
 
 	assert.NotEmpty(t, check.Name, "Should have a non-empty name")
@@ -92,59 +87,90 @@ func TestUnhealthy(t *testing.T) {
 
 	assert.False(t, check.Ok, "Expect it's not ok")
 
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
+}
+
+func TestUnhealthyBecauseOfEnsureIndexes(t *testing.T) {
+	mockClient := new(MockClient)
+
+	mockClient.On("Ping").Return(nil)
+	mockClient.On("EnsureIndexes").Return(errors.New("we ain't looking too good"))
+
+	req, _ := http.NewRequest("GET", "http://nothing/__health", nil)
+	w := httptest.NewRecorder()
+
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
+	hs.HealthChecksHandler()(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	health := fthealth.HealthResult{}
+	err := json.NewDecoder(w.Body).Decode(&health)
+	if err != nil {
+		t.Fatal("Should return valid json!")
+	}
+
+	assert.NotEmpty(t, health.Name, "Should have a non-empty name")
+	assert.NotEmpty(t, health.Description, "Should have a non-empty description")
+	assert.NotEmpty(t, health.SchemaVersion, "Should have a non-empty schema version")
+	assert.False(t, health.Ok, "Expect it's ok")
+
+	assert.Len(t, health.Checks, 2, "Only two health check currently")
+	check := health.Checks[1]
+
+	assert.Equal(t, "List Notifications RW - Search indexes are created", check.Name, "Should have a non-empty name")
+	assert.Equal(t, "https://runbooks.ftops.tech/upp-list-notifications-rw", check.PanicGuide, "Should have a non-empty panic guide")
+	assert.Equal(t, uint8(2), check.Severity, "Severity 2")
+	assert.Equal(t, "Some API consumers may experience slow performance for list notifications requests", check.BusinessImpact, "Should have a non-empty business impact")
+	assert.Equal(t, "The application indexes for the database may not be up-to-date (indexing may be in progress). This will result in degraded performance from the content platform and affect a variety of products.", check.TechnicalSummary, "Should have a non-empty technical summary")
+
+	assert.False(t, check.Ok, "Expect it's not ok")
+
+	mockClient.AssertExpectations(t)
 }
 
 func TestWorkingGTG(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(nil)
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(nil)
+	mockClient.On("EnsureIndexes").Return(nil)
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestFailingGTG(t *testing.T) {
-	mockDb := new(MockDB)
-	mockTx := new(MockTX)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(mockTx, nil)
-	mockTx.On("Ping").Return(errors.New("omg we are not gtg"))
-	mockTx.On("Close")
+	mockClient.On("Ping").Return(errors.New("omg we are not gtg"))
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
-	mockDb.AssertExpectations(t)
-	mockTx.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
 
 func TestFailingDBGTG(t *testing.T) {
-	mockDb := new(MockDB)
+	mockClient := new(MockClient)
 
-	mockDb.On("Open").Return(nil, errors.New("omg we are not gtg"))
+	mockClient.On("Ping").Return(errors.New("omg we are not gtg"))
 
 	req, _ := http.NewRequest("GET", "http://nothing/at/__gtg", nil)
 	w := httptest.NewRecorder()
 
-	hs := NewHealthService(mockDb, "app-system-code", "app-name", "Description of app")
+	hs := NewHealthService(mockClient, "app-system-code", "app-name", "Description of app")
 	status.NewGoodToGoHandler(hs.GTG)(w, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
-	mockDb.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
