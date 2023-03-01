@@ -54,7 +54,7 @@ func ReadNotifications(mapper mapping.NotificationsMapper, nextLink mapping.Next
 			return
 		}
 
-		var results []model.PublicNotification
+		results := make([]model.PublicNotification, 0)
 		for i, n := range *notifications {
 			if i >= reader.GetLimit() {
 				break

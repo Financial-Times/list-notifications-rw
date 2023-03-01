@@ -81,7 +81,8 @@ func TestReadNoNotifications(t *testing.T) {
 
 	mockClient := new(MockClient)
 
-	var mockNotifications []model.InternalNotification
+	//Important Ft.com expects [] not nil
+	mockNotifications := make([]model.InternalNotification, 0)
 
 	mockClient.On("ReadNotifications", 0, mockSince).Return(&mockNotifications, nil)
 
@@ -96,6 +97,7 @@ func TestReadNoNotifications(t *testing.T) {
 
 	results := page.Notifications
 
+	assert.NotNil(t, results, "Result must be empty, but not nil")
 	assert.Len(t, results, 0)
 	mockClient.AssertExpectations(t)
 }
