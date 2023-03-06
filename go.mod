@@ -8,6 +8,7 @@ require (
 	github.com/Financial-Times/go-logger/v2 v2.0.1
 	github.com/Financial-Times/http-handlers-go v1.0.0
 	github.com/Financial-Times/service-status-go v0.3.0
+	github.com/Financial-Times/upp-go-sdk v1.3.4
 	github.com/gorilla/mux v1.8.0
 	github.com/jawher/mow.cli v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
@@ -18,7 +19,6 @@ require (
 
 require (
 	github.com/Financial-Times/transactionid-utils-go v1.0.0 // indirect
-	github.com/Financial-Times/upp-go-sdk v1.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/uniuri v1.2.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
