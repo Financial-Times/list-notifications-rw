@@ -33,11 +33,6 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
-          - name: MONGO_ADDRESSES
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: mongo.addresses
           - name: DUMP_REQUESTS
             value: "{{ .Values.env.DUMP_REQUESTS }}"
           - name: API_HOST
@@ -50,12 +45,29 @@ spec:
               configMapKeyRef:
                 name: global-config
                 key: cache-max-age
+          - name: NOTIFICATIONS_LIMIT
+            value: "{{ .Values.env.NOTIFICATIONS_LIMIT }}"
           - name: LOG_LEVEL
             value: "{{ .Values.env.LOG_LEVEL }}"
-          - name: MONGO_DATABASE
-            value: "{{ .Values.env.mongo.database }}"
-          - name: MONGO_COLLECTION
-            value: "{{ .Values.env.mongo.collection }}"
+          - name: DOCDB_CLUSTER_ADDRESS
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: aws.documentdb.cluster.address
+          - name: DOCDB_NAME
+            value: "{{ .Values.env.DOCDB_NAME }}"
+          - name: DOCDB_COLLECTION
+            value: "{{ .Values.env.DOCDB_COLLECTION }}"
+          - name: DOCDB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: global-secrets
+                key: aws.doc-db.username
+          - name: DOCDB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: global-secrets
+                key: aws.doc-db.password
         ports:
           - containerPort: 8080
         livenessProbe:

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// InternalNotification represents the document format within Mongo
+// InternalNotification represents the document format within database
 type InternalNotification struct {
 	Title            string    `json:"title" bson:"title"`
 	UUID             string    `json:"uuid" bson:"uuid"`

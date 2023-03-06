@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -11,11 +13,32 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// integration tests runs with local mongo instance
+func NewMockClient(address, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
+	address = fmt.Sprintf("mongodb://%s", address)
+	opts := options.Client().ApplyURI(address)
+
+	client, err := mongo.Connect(context.Background(), opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		client:     client,
+		database:   database,
+		collection: collection,
+		cacheDelay: cacheDelay,
+		maxLimit:   maxLimit,
+		log:        log,
+	}, nil
+}
 
 func TestOpenPingAndConfig(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Mongo integration for long tests only.")
+		t.Skip("Database integration for long tests only.")
 	}
 
 	mongoURL := os.Getenv("MONGO_TEST_URL")
@@ -30,7 +53,7 @@ func TestOpenPingAndConfig(t *testing.T) {
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewMockClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	assert.NoError(t, client.Ping(), "We should not error pinging mongo!")
@@ -40,7 +63,7 @@ func TestOpenPingAndConfig(t *testing.T) {
 
 func TestReadWriteFind(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Mongo integration for long tests only.")
+		t.Skip("Database integration for long tests only.")
 	}
 
 	mongoURL := os.Getenv("MONGO_TEST_URL")
@@ -56,7 +79,7 @@ func TestReadWriteFind(t *testing.T) {
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewMockClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	notification := model.InternalNotification{
@@ -92,7 +115,7 @@ func TestReadWriteFind(t *testing.T) {
 
 func TestNotFound(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Mongo integration for long tests only.")
+		t.Skip("Database integration for long tests only.")
 	}
 
 	mongoURL := os.Getenv("MONGO_TEST_URL")
@@ -107,7 +130,7 @@ func TestNotFound(t *testing.T) {
 
 	log := logger.NewUPPLogger("test", "PANIC")
 
-	client, err := NewClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
+	client, err := NewMockClient(mongoURL, database, collection, cacheDelay, maxLimit, log)
 	require.NoError(t, err)
 
 	_, err = client.FindNotificationByTransactionID("tid_i-dont-exist")

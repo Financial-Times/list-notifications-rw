@@ -80,13 +80,6 @@ func main() {
 		EnvVar: "NOTIFICATIONS_LIMIT",
 	})
 
-	mongoAddress := app.String(cli.StringOpt{
-		Name:   "db",
-		Desc:   "MongoDB database connection string (i.e. comma separated list of ip:port)",
-		Value:  "localhost:27017",
-		EnvVar: "MONGO_ADDRESSES",
-	})
-
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
 		Value:  "./api.yml",
@@ -101,18 +94,39 @@ func main() {
 		EnvVar: "LOG_LEVEL",
 	})
 
-	mongoDatabase := app.String(cli.StringOpt{
-		Name:   "mongoDatabase",
-		Value:  "upp-store",
-		Desc:   "Mongo database to read from",
-		EnvVar: "MONGO_DATABASE",
+	dbClusterAddress := app.String(cli.StringOpt{
+		Name:   "dbClusterAddress",
+		Desc:   "DocumentDB cluster connection string",
+		Value:  "",
+		EnvVar: "DOCDB_CLUSTER_ADDRESS",
 	})
 
-	mongoCollection := app.String(cli.StringOpt{
-		Name:   "mongoCollection",
+	dbName := app.String(cli.StringOpt{
+		Name:   "dbName",
+		Value:  "upp-store",
+		Desc:   "Name of the database to read from",
+		EnvVar: "DOCDB_NAME",
+	})
+
+	dbCollection := app.String(cli.StringOpt{
+		Name:   "dbCollection",
 		Value:  "list-notifications",
-		Desc:   "Mongo collection to read from",
-		EnvVar: "MONGO_COLLECTION",
+		Desc:   "Name of the collection to read from",
+		EnvVar: "DOCDB_COLLECTION",
+	})
+
+	dbUsername := app.String(cli.StringOpt{
+		Name:   "dbUsername",
+		Value:  "",
+		Desc:   "Username to connect to DocumentDB",
+		EnvVar: "DOCDB_USERNAME",
+	})
+
+	dbPassword := app.String(cli.StringOpt{
+		Name:   "dbPassword",
+		Value:  "",
+		Desc:   "Password to use to connect to DocumentDB",
+		EnvVar: "DOCDB_PASSWORD",
 	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)
@@ -120,8 +134,8 @@ func main() {
 	app.Action = func() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
-		log.Info("Initialising MongoDB.")
-		client, err := db.NewClient(*mongoAddress, *mongoDatabase, *mongoCollection, *cacheMaxAge, *limit, log)
+		log.Info("Initialising database connection.")
+		client, err := db.NewClient(*dbClusterAddress, *dbUsername, *dbPassword, *dbName, *dbCollection, *cacheMaxAge, *limit, log)
 		if err != nil {
 			log.WithError(err).Error("Failed to create database client")
 			return
@@ -133,7 +147,7 @@ func main() {
 			}
 		}(client)
 
-		log.Info("Ensuring Mongo indices are setup...")
+		log.Info("Ensuring database indices are setup...")
 		err = client.EnsureIndexes()
 		if err != nil {
 			log.WithError(err).Warn("Failed to ensure database indices!")
