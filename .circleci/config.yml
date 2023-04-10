@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  ft-golang-ci: financial-times/golang-ci@1
+  ft-golang-ci: financial-times/golang-ci@1.2.2
 jobs:
   build:
     working_directory: /go/src/github.com/Financial-Times/list-notifications-rw
@@ -21,13 +21,18 @@ jobs:
 workflows:
   test-and-build-docker:
     jobs:
-      - build
+      - build:
+          name: build
+          context: cm-team-github
       - ft-golang-ci/docker-build:
           name: build-docker-image
           requires:
             - build
+          context: cm-team-github
   snyk-scanning:
     jobs:
       - ft-golang-ci/scan:
           name: scan-dependencies
-          context: cm-team-snyk
+          context:
+            - cm-team-snyk
+            - cm-team-github

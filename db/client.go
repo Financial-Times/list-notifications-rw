@@ -2,11 +2,11 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
+	"github.com/Financial-Times/upp-go-sdk/pkg/documentdb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,14 +22,15 @@ type Client struct {
 }
 
 // NewClient creates new client instance
-func NewClient(address, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
-	uri := fmt.Sprintf("mongodb://%s", address)
-	opts := options.Client().ApplyURI(uri)
-
+func NewClient(address, username, password, database, collection string, cacheDelay, maxLimit int, log *logger.UPPLogger) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, opts)
+	client, err := documentdb.NewClient(ctx, documentdb.ConnectionParams{
+		Host:     address,
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func NewClient(address, database, collection string, cacheDelay, maxLimit int, l
 	}, nil
 }
 
-// WriteNotification inserts a notification into mongo
+// WriteNotification inserts a notification into database
 func (c *Client) WriteNotification(notification *model.InternalNotification) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -139,7 +140,7 @@ func (c *Client) GetLimit() int {
 	return c.maxLimit
 }
 
-// Ping returns a mongo ping response
+// Ping returns a database ping response
 func (c *Client) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
