@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  ft-golang-ci: financial-times/golang-ci@1
+  ft-golang-ci: financial-times/golang-ci@1.2.2
 jobs:
   build:
     working_directory: /go/src/github.com/Financial-Times/list-notifications-rw
