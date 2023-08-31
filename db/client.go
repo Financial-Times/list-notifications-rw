@@ -6,7 +6,7 @@ import (
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/list-notifications-rw/model"
-	"github.com/Financial-Times/upp-go-sdk/pkg/documentdb"
+	"github.com/Financial-Times/upp-go-sdk/pkg/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,10 +26,11 @@ func NewClient(address, username, password, database, collection string, cacheDe
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	client, err := documentdb.NewClient(ctx, documentdb.ConnectionParams{
+	client, err := mongodb.NewClient(ctx, mongodb.ConnectionParams{
 		Host:     address,
 		Username: username,
 		Password: password,
+		UseSrv:   true,
 	})
 	if err != nil {
 		return nil, err

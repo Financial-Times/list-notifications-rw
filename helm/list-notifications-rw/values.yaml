@@ -16,6 +16,6 @@ resources:
 env:
   DUMP_REQUESTS: false
   LOG_LEVEL: INFO
-  DOCDB_NAME: upp-store
-  DOCDB_COLLECTION: list-notifications
+  DB_NAME: upp-store
+  DB_COLLECTION: list-notifications
   NOTIFICATIONS_LIMIT: 200
