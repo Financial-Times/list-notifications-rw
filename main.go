@@ -96,37 +96,37 @@ func main() {
 
 	dbClusterAddress := app.String(cli.StringOpt{
 		Name:   "dbClusterAddress",
-		Desc:   "DocumentDB cluster connection string",
+		Desc:   "Database cluster connection string",
 		Value:  "",
-		EnvVar: "DOCDB_CLUSTER_ADDRESS",
+		EnvVar: "DB_CLUSTER_ADDRESS",
 	})
 
 	dbName := app.String(cli.StringOpt{
 		Name:   "dbName",
 		Value:  "upp-store",
 		Desc:   "Name of the database to read from",
-		EnvVar: "DOCDB_NAME",
+		EnvVar: "DB_NAME",
 	})
 
 	dbCollection := app.String(cli.StringOpt{
 		Name:   "dbCollection",
 		Value:  "list-notifications",
 		Desc:   "Name of the collection to read from",
-		EnvVar: "DOCDB_COLLECTION",
+		EnvVar: "DB_COLLECTION",
 	})
 
 	dbUsername := app.String(cli.StringOpt{
 		Name:   "dbUsername",
 		Value:  "",
-		Desc:   "Username to connect to DocumentDB",
-		EnvVar: "DOCDB_USERNAME",
+		Desc:   "Username to connect to Atlas MongoDB",
+		EnvVar: "DB_USERNAME",
 	})
 
 	dbPassword := app.String(cli.StringOpt{
 		Name:   "dbPassword",
 		Value:  "",
-		Desc:   "Password to use to connect to DocumentDB",
-		EnvVar: "DOCDB_PASSWORD",
+		Desc:   "Password to use to connect to Atlas MongoDB",
+		EnvVar: "DB_PASSWORD",
 	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)

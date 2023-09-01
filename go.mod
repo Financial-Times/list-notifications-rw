@@ -1,6 +1,6 @@
 module github.com/Financial-Times/list-notifications-rw
 
-go 1.19
+go 1.21
 
 require (
 	github.com/Financial-Times/api-endpoint v1.0.0
@@ -8,7 +8,7 @@ require (
 	github.com/Financial-Times/go-logger/v2 v2.0.1
 	github.com/Financial-Times/http-handlers-go v1.0.0
 	github.com/Financial-Times/service-status-go v0.3.0
-	github.com/Financial-Times/upp-go-sdk v1.3.4
+	github.com/Financial-Times/upp-go-sdk v1.4.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jawher/mow.cli v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
