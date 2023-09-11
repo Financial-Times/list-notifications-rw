@@ -24,7 +24,7 @@ go test -v -race ./...
 
 ## Running Locally
 
-The `list-notifications-rw` requires access to DocumentDB. Update the environment variable `DOCDB_CLUSTER_ADDRESSES` field to point to the DocumentDB cluster. To run, simply build and run:
+The `list-notifications-rw` requires access to Atlas MongoDB. Update the environment variable `DB_CLUSTER_ADDRESS` field to point to the Atlas MongoDB cluster. To run, simply build and run:
 
 ```
 ./list-notifications-rw
@@ -42,7 +42,7 @@ Write a new list notification:
 curl http://localhost:8080/lists/notifications/{uuid} -XPUT --data '$json'
 ```
 
-Where `$json` is a valid internal list in json format. To get example list data, see [sample-list.json](/sample-list.json) or get an example from the DocumentDB `lists` collection.
+Where `$json` is a valid internal list in json format. To get example list data, see [sample-list.json](/sample-list.json) or get an example from the Atlas MongoDB `lists` collection.
 
 Read notifications:
 

@@ -49,25 +49,25 @@ spec:
             value: "{{ .Values.env.NOTIFICATIONS_LIMIT }}"
           - name: LOG_LEVEL
             value: "{{ .Values.env.LOG_LEVEL }}"
-          - name: DOCDB_CLUSTER_ADDRESS
+          - name: DB_CLUSTER_ADDRESS
             valueFrom:
               configMapKeyRef:
                 name: global-config
-                key: aws.documentdb.cluster.address
-          - name: DOCDB_NAME
-            value: "{{ .Values.env.DOCDB_NAME }}"
-          - name: DOCDB_COLLECTION
-            value: "{{ .Values.env.DOCDB_COLLECTION }}"
-          - name: DOCDB_USERNAME
+                key: documentstore.cluster.address
+          - name: DB_NAME
+            value: "{{ .Values.env.DB_NAME }}"
+          - name: DB_COLLECTION
+            value: "{{ .Values.env.DB_COLLECTION }}"
+          - name: DB_USERNAME
             valueFrom:
               secretKeyRef:
                 name: doppler-global-secrets
-                key: AWS_DOC_DB_USERNAME
-          - name: DOCDB_PASSWORD
+                key: DOCUMENT_STORE_CLUSTER_USERNAME
+          - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: doppler-global-secrets
-                key: AWS_DOC_DB_PASSWORD
+                key: DOCUMENT_STORE_CLUSTER_PASSWORD
         ports:
           - containerPort: 8080
         livenessProbe:
